@@ -1,6 +1,6 @@
 import Link from "next/link"
 
-const rooms = [
+export const rooms = [
   { id: 'room-one' },
   { id: 'abcsfda' },
   { id: '1234' },
