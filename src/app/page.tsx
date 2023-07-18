@@ -10,6 +10,7 @@ const rooms = [
 export default function Home() {
   return (
     <main className="">
+      <h2>Home page</h2>
       <ul>
         {rooms.map((room) => (
           <li key={room.id}>
