@@ -75,6 +75,11 @@ export default function Room({ id }: Room) {
             console.log('Failed to reconnect to the server');
         });
 
+        socket.on('update-user-list', (args) => {
+            console.log('Updating user list')
+            console.log(args)
+        })
+
     }
 
     return (
