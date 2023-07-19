@@ -2,7 +2,7 @@
 
 import { Socket, io } from "socket.io-client";
 import { BACKEND_URL } from "@/app/util/config";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface Room {
     id: string
@@ -13,6 +13,8 @@ let socket: Socket;
 
 export default function Room({ id }: Room) {
 
+    const localVideo = useRef<HTMLVideoElement | null>(null);
+
     useEffect(() => {
 
         initializeSocket()
@@ -20,6 +22,26 @@ export default function Room({ id }: Room) {
         return () => {
             socket.disconnect()
         };
+    }, [])
+
+    useEffect(() => {
+
+        (async () => {
+            try {
+                let stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+
+                if (localVideo.current) {
+                    localVideo.current.srcObject = stream;
+                } else {
+                    throw new Error('No video element')
+                }
+
+            } catch (error) {
+                console.log(error);
+            }
+        })();
+
+
     }, [])
 
     function initializeSocket() {
@@ -54,6 +76,8 @@ export default function Room({ id }: Room) {
     return (
         <div>
             backend: {BACKEND_URL}
+
+            <video ref={localVideo} autoPlay muted />
         </div>
     )
 }
