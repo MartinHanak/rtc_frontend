@@ -45,7 +45,11 @@ export default function Room({ id }: Room) {
     }, [])
 
     function initializeSocket() {
-        socket = io(`http://${BACKEND_URL}`);
+        socket = io(`http://${BACKEND_URL}`, {
+            extraHeaders: {
+                'room': `${id}`
+            }
+        });
 
         socket.on('connect', () => {
             console.log('Connected to the server');
