@@ -3,6 +3,9 @@ const nextConfig = {
       reactStrictMode: true,
 }
 
+
+// webpack config added because of socket.io module resolution bug:
+// https://github.com/netlify/netlify-lambda/issues/179
 module.exports = {
     ...nextConfig,
     webpack: (config, { isServer }) => {
