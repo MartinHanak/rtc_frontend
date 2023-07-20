@@ -1,8 +1,9 @@
 import { Socket, io } from "socket.io-client";
 import { BACKEND_URL } from "@/app/util/config";
+import { ClientToServerEvents, ServerToClientEvents } from "@/app/types/types";
 
 export function initializeSocket(roomId: string) {
-    const socket = io(`http://${BACKEND_URL}`, {
+    const socket : Socket<ServerToClientEvents,ClientToServerEvents> = io(`http://${BACKEND_URL}`, {
         extraHeaders: {
             'room': `${roomId}`
         }

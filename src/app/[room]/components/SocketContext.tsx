@@ -1,4 +1,4 @@
-import React, { MutableRefObject, createContext, useContext, useEffect, useRef, useState } from "react";
+import React, { MutableRefObject, createContext, useContext, useEffect, useRef } from "react";
 import { initializeSocket } from "./initializeSocket";
 import { Socket } from "socket.io-client";
 
@@ -11,8 +11,7 @@ interface Context {
 
 export function SocketContextProvider({ children, roomId }: Context) {
 
-    // initializes socket connection for given room
-    //const socketRef = useRef(initializeSocket(roomId));
+    // reference for socket connection for given room
     const socketRef = useRef<Socket | null>(null)
 
 
