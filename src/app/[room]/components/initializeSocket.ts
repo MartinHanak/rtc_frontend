@@ -1,6 +1,7 @@
 import { Socket, io } from "socket.io-client";
 import { BACKEND_URL } from "@/app/util/config";
 import { ClientToServerEvents, ServerToClientEvents } from "@/app/types/types";
+import { redirect } from "next/navigation";
 
 export function initializeSocket(roomId: string) {
     const socket : Socket<ServerToClientEvents,ClientToServerEvents> = io(`http://${BACKEND_URL}`, {
@@ -33,6 +34,7 @@ export function initializeSocket(roomId: string) {
     socket.on('reconnect_failed', () => {
         console.log('Failed to reconnect to the server');
     });
+
 
     return socket
 }

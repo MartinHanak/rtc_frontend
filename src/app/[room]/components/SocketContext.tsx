@@ -1,8 +1,13 @@
-import React, { MutableRefObject, createContext, useContext, useEffect, useRef } from "react";
+import React, { MutableRefObject, createContext, useContext, useEffect, useRef, useState } from "react";
 import { initializeSocket } from "./initializeSocket";
 import { Socket } from "socket.io-client";
 
-const SocketContext = createContext<MutableRefObject<Socket | null> | null>(null);
+interface ContextValue {
+    socketRef: MutableRefObject<Socket | null>
+    ready: boolean
+}
+
+const SocketContext = createContext<ContextValue | null>(null);
 
 interface Context {
     children: React.ReactNode,
@@ -12,7 +17,8 @@ interface Context {
 export function SocketContextProvider({ children, roomId }: Context) {
 
     // reference for socket connection for given room
-    const socketRef = useRef<Socket | null>(null)
+    const socketRef = useRef<Socket | null>(null);
+    const [ready, setReady] = useState(false);
 
 
     // cleanup socket on dismount 
@@ -22,13 +28,17 @@ export function SocketContextProvider({ children, roomId }: Context) {
 
         socketRef.current = initializeSocket(roomId)
 
+        socketRef.current.on('connect', () => {
+            setReady(true);
+        })
+
         return () => {
             socketRef.current?.disconnect();
         }
     }, [roomId]);
 
     return (
-        <SocketContext.Provider value={socketRef}>
+        <SocketContext.Provider value={{ socketRef, ready }}>
             {children}
         </SocketContext.Provider>
     )

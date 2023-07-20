@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { SocketContextProvider } from "./SocketContext";
+import { LocalStreamProvider } from "./LocalStreamContext";
 
 
 interface Room {
@@ -18,11 +19,12 @@ export default function Room({ id }: Room) {
 
     return (
         <SocketContextProvider roomId={id}>
+            <LocalStreamProvider>
 
-            <video ref={localVideo} autoPlay muted />
+                <video ref={localVideo} autoPlay muted />
+                <video ref={remoteVideo} autoPlay muted></video>
 
-            <video ref={remoteVideo} autoPlay muted></video>
-
+            </LocalStreamProvider>
         </SocketContextProvider>
     )
 }
