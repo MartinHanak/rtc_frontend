@@ -1,12 +1,14 @@
 
 export interface ServerToClientEvents {
+    // room events, specific to one socket
     "created": () => void,
     "joined": () => void,
     "full": () => void,
-    "offer": (offer: RTCSessionDescriptionInit) => void,
-    "answer": (answer: RTCSessionDescriptionInit) => void,
-    "ice-candidate": (candidate: RTCIceCandidate) => void,
-    "ready": () => void,
+    // webRTC events
+    "offer": (fromSocketId: string, offer: RTCSessionDescriptionInit) => void,
+    "answer": (fromSocketId: string, answer: RTCSessionDescriptionInit) => void,
+    "ice-candidate": (fromSocketId: string, candidate: RTCIceCandidate) => void,
+    "ready": (fromSocketId: string) => void,
     "leave": () => void,
     // only for logs
     "reconnect": (attemptNumber: number) => void,
@@ -15,8 +17,8 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-    "offer": (offer: RTCSessionDescriptionInit) => void,
-    "answer": (answer: RTCSessionDescriptionInit) => void,
-    "ice-candidate": (candidate: RTCIceCandidate ) => void,
-    "ready": () => void,
+    "offer": (fromSocketId: string, offer: RTCSessionDescriptionInit) => void,
+    "answer": (fromSocketId: string, answer: RTCSessionDescriptionInit) => void,
+    "ice-candidate": (fromSocketId: string, candidate: RTCIceCandidate ) => void,
+    "ready": (fromSocketId: string) => void,
 }

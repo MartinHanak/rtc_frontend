@@ -36,7 +36,7 @@ export function LocalStreamProvider({ children }: LocalStreamContext) {
                 break;
             case 'joined':
                 if (socketRef && socketRef.current) {
-                    socketRef.current.emit("ready");
+                    socketRef.current.emit("ready", socketRef.current.id);
                 }
                 break;
         }

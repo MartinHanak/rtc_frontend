@@ -7,13 +7,13 @@ interface SocketContextValue {
     socketRef: MutableRefObject<Socket<ServerToClientEvents, ClientToServerEvents> | null> | null,
     roomId: string,
     roomState: roomState | null,
-    offers: RTCSessionDescriptionInit[],
-    answers: RTCSessionDescriptionInit[],
-    iceCandidates: RTCIceCandidate[],
-    ready: boolean
+    offers: offerWithSocketId[],
+    answers: answerWithSocketId[],
+    iceCandidates: iceCandidateWithSocketId[],
+    ready: readyWithSocketId[]
 }
 
-const SocketContext = createContext<SocketContextValue>({ socketRef: null, roomId: '', roomState: null, offers: [], answers: [], iceCandidates: [], ready: false });
+const SocketContext = createContext<SocketContextValue>({ socketRef: null, roomId: '', roomState: null, offers: [], answers: [], iceCandidates: [], ready: [] });
 
 interface SocketContextProvider {
     children: React.ReactNode,
@@ -22,6 +22,26 @@ interface SocketContextProvider {
 
 type roomState = "full" | "joined" | "created"
 
+type offerWithSocketId = {
+    fromSocketId: string,
+    offer: RTCSessionDescriptionInit
+}
+
+type answerWithSocketId = {
+    fromSocketId: string,
+    answer: RTCSessionDescriptionInit
+}
+
+type iceCandidateWithSocketId = {
+    fromSocketId: string,
+    candidate: RTCIceCandidate
+}
+
+type readyWithSocketId = {
+    fromSocketId: string,
+    ready: boolean
+}
+
 export function SocketContextProvider({ children, roomId }: SocketContextProvider) {
 
     // reference for socket connection for given room
@@ -29,11 +49,11 @@ export function SocketContextProvider({ children, roomId }: SocketContextProvide
     const [roomState, setRoomState] = useState<roomState | null>(null);
 
     // state for WebRTC offers, answers, ICE-candidates
-    const [offers, setOffers] = useState<RTCSessionDescriptionInit[]>([]);
-    const [answers, setAnswers] = useState<RTCSessionDescriptionInit[]>([]);
-    const [iceCandidates, setIceCandidates] = useState<RTCIceCandidate[]>([]);
+    const [offers, setOffers] = useState<offerWithSocketId[]>([]);
+    const [answers, setAnswers] = useState<answerWithSocketId[]>([]);
+    const [iceCandidates, setIceCandidates] = useState<iceCandidateWithSocketId[]>([]);
 
-    const [ready, setReady] = useState(false);
+    const [ready, setReady] = useState<readyWithSocketId[]>([]);
 
 
     // cleanup socket on dismount 
@@ -56,22 +76,22 @@ export function SocketContextProvider({ children, roomId }: SocketContextProvide
 
 
         // webRTC events
-        socketRef.current.on("offer", (offer) => {
+        socketRef.current.on("offer", (fromSocketId: string, offer) => {
             console.log(`Received WebRTC offer`);
-            setOffers((oldOffers) => [...oldOffers, offer])
+            setOffers((oldOffers) => [...oldOffers, { fromSocketId, offer }])
         })
-        socketRef.current.on("answer", (answer) => {
+        socketRef.current.on("answer", (fromSocketId: string, answer) => {
             console.log(`Received WebRTC answer`);
-            setAnswers((oldAnswers) => [...oldAnswers, answer])
+            setAnswers((oldAnswers) => [...oldAnswers, { fromSocketId, answer }])
         })
-        socketRef.current.on("ice-candidate", (candidate) => {
+        socketRef.current.on("ice-candidate", (fromSocketId: string, candidate) => {
             console.log(`Received WebRTC ICE candidate`);
-            setIceCandidates((oldCandidates) => [...oldCandidates, candidate])
+            setIceCandidates((oldCandidates) => [...oldCandidates, { fromSocketId, candidate }])
         })
 
-        socketRef.current.on("ready", () => {
+        socketRef.current.on("ready", (fromSocketId: string) => {
             console.log("All rooms participants are ready to start broadcasting");
-            setReady(true)
+            setReady((previous) => [...previous, { fromSocketId, ready: true }])
         })
 
         return () => {

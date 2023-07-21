@@ -59,7 +59,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
 
                         if (socketRef && socketRef.current) {
                             console.log('Sending WebRTC offer')
-                            socketRef.current.emit('offer', offer)
+                            socketRef.current.emit('offer', socketRef.current.id, offer)
                         } else {
                             throw new Error(`Socket not ready while emitting offer.`)
                         }
@@ -115,7 +115,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
 
                         if (socketRef && socketRef.current) {
                             console.log(`Sending WebRTC answer`)
-                            socketRef.current.emit("answer", answer)
+                            socketRef.current.emit("answer", socketRef.current.id, answer)
                         } else {
                             throw new Error(`Socket not ready when sending WebRTC answer`)
                         }
@@ -127,7 +127,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
                 peerConnectionRef.current.push(newConnection);
             }
 
-            handleOffer(newOffer);
+            handleOffer(newOffer.offer);
         }
     }, [offers, roomState, localStreamRef, socketRef])
 
