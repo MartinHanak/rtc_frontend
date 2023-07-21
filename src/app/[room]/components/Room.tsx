@@ -1,16 +1,15 @@
 'use client'
 
 import { useRef } from "react";
-import { SocketContextProvider } from "./SocketContext";
-import { LocalStreamProvider } from "./LocalStreamContext";
+import { RoomContext } from "./RoomContext";
 
 
 interface Room {
-    id: string
+    roomId: string
 }
 
 
-export default function Room({ id }: Room) {
+export default function Room({ roomId }: Room) {
 
     const localVideo = useRef<HTMLVideoElement | null>(null);
     const remoteVideo = useRef<HTMLVideoElement | null>(null);
@@ -18,13 +17,11 @@ export default function Room({ id }: Room) {
 
 
     return (
-        <SocketContextProvider roomId={id}>
-            <LocalStreamProvider>
+        <RoomContext roomId={roomId}>
 
-                <video ref={localVideo} autoPlay muted />
-                <video ref={remoteVideo} autoPlay muted></video>
+            <video ref={localVideo} autoPlay muted />
+            <video ref={remoteVideo} autoPlay muted></video>
 
-            </LocalStreamProvider>
-        </SocketContextProvider>
+        </RoomContext>
     )
 }

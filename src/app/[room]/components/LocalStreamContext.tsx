@@ -1,8 +1,13 @@
-import React, { MutableRefObject, createContext, useRef, useContext, useEffect } from "react";
+import { MutableRefObject, createContext, useRef, useContext, useEffect } from "react";
 import { useSocketContext } from "./SocketContext";
 import { redirect } from "next/navigation";
 
-const LocalStreamContext = createContext<MutableRefObject<MediaStream | null> | null>(null);
+
+interface LocalStreamContextValue {
+    streamRef: MutableRefObject<MediaStream | null> | null
+}
+
+const LocalStreamContext = createContext<LocalStreamContextValue>({ streamRef: null });
 
 interface LocalStreamContext {
     children: React.ReactNode
@@ -57,7 +62,7 @@ export function LocalStreamProvider({ children }: LocalStreamContext) {
     }, [socketRef, roomId, roomState]);
 
     return (
-        <LocalStreamContext.Provider value={streamRef}>
+        <LocalStreamContext.Provider value={{ streamRef }}>
             {children}
         </LocalStreamContext.Provider>
     )

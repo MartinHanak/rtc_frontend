@@ -8,7 +8,7 @@ export default function Page({ params }: { params: { room: string } }) {
             .length > 0 ?
             <div>
                 Welcome to room {decodeURIComponent(params.room)}
-                <Room id={params.room} />
+                <Room roomId={params.room} />
             </div>
             :
             <div>Room {decodeURIComponent(params.room)} does not exist.</div>
