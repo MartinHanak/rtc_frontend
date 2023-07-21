@@ -3,22 +3,25 @@ import { initializeSocket } from "./initializeSocket";
 import { Socket } from "socket.io-client";
 
 interface ContextValue {
-    socketRef: MutableRefObject<Socket | null>
-    ready: boolean
+    socketRef: MutableRefObject<Socket | null> | null,
+    roomId: string,
+    roomState: roomState | null
 }
 
-const SocketContext = createContext<ContextValue | null>(null);
+const SocketContext = createContext<ContextValue>({ socketRef: null, roomId: '', roomState: null });
 
 interface Context {
     children: React.ReactNode,
     roomId: string
 }
 
+type roomState = "full" | "joined" | "created"
+
 export function SocketContextProvider({ children, roomId }: Context) {
 
     // reference for socket connection for given room
     const socketRef = useRef<Socket | null>(null);
-    const [ready, setReady] = useState(false);
+    const [roomState, setRoomState] = useState<roomState | null>(null);
 
 
     // cleanup socket on dismount 
@@ -28,8 +31,16 @@ export function SocketContextProvider({ children, roomId }: Context) {
 
         socketRef.current = initializeSocket(roomId)
 
-        socketRef.current.on('connect', () => {
-            setReady(true);
+        socketRef.current.on('full', () => {
+            setRoomState('full')
+        })
+
+        socketRef.current.on('created', () => {
+            setRoomState('created')
+        })
+
+        socketRef.current.on('joined', () => {
+            setRoomState('joined')
         })
 
         return () => {
@@ -37,10 +48,18 @@ export function SocketContextProvider({ children, roomId }: Context) {
         }
     }, [roomId]);
 
+
+    // socket connection ready when roomState !== null
     return (
-        <SocketContext.Provider value={{ socketRef, ready }}>
-            {children}
-        </SocketContext.Provider>
+        <>{roomState ?
+            <SocketContext.Provider value={{ socketRef, roomId, roomState }}>
+                {children}
+            </SocketContext.Provider>
+            :
+            <div>
+                Socket connecting ....
+            </div>
+        }</>
     )
 }
 

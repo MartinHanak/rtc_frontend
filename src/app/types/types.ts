@@ -15,7 +15,6 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
-    "join": () => void,
     "offer": (offer: RTCSessionDescriptionInit) => void,
     "answer": (answer: RTCSessionDescriptionInit) => void,
     "ice-candidate": (candidate: RTCIceCandidate ) => void,
