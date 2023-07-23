@@ -1,4 +1,4 @@
-import { MutableRefObject, createContext, useRef, useContext, useEffect } from "react";
+import { MutableRefObject, createContext, useRef, useContext, useEffect, useState } from "react";
 import { useSocketContext } from "./SocketContext";
 import { redirect } from "next/navigation";
 
@@ -15,7 +15,7 @@ interface LocalStreamContext {
 
 export function LocalStreamProvider({ children }: LocalStreamContext) {
 
-    const isHostRef = useRef(false);
+    const [streamReady, setStreamReady] = useState(false);
     const streamRef = useRef<MediaStream | null>(null);
     const { socketRef, roomId, roomState } = useSocketContext();
 
@@ -32,9 +32,10 @@ export function LocalStreamProvider({ children }: LocalStreamContext) {
                 redirect("/");
                 break;
             case 'created':
-                isHostRef.current = true;
+                console.log('room created')
                 break;
             case 'joined':
+                console.log('room joined')
                 if (socketRef && socketRef.current) {
                     socketRef.current.emit("ready", socketRef.current.id);
                 }
@@ -44,6 +45,7 @@ export function LocalStreamProvider({ children }: LocalStreamContext) {
         (async () => {
             try {
                 streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                setStreamReady(true);
 
             } catch (error) {
                 console.log(error)
@@ -63,7 +65,7 @@ export function LocalStreamProvider({ children }: LocalStreamContext) {
 
     return (
         <LocalStreamContext.Provider value={{ streamRef }}>
-            {children}
+            {streamReady ? children : <div> Loading stream... </div>}
         </LocalStreamContext.Provider>
     )
 }

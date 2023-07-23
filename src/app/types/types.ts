@@ -8,7 +8,7 @@ export interface ServerToClientEvents {
     "offer": (fromSocketId: string, offer: RTCSessionDescriptionInit) => void,
     "answer": (fromSocketId: string, answer: RTCSessionDescriptionInit) => void,
     "ice-candidate": (fromSocketId: string, candidate: RTCIceCandidate) => void,
-    "ready": (fromSocketId: string) => void,
+    "ready": (fromSocketId: string, username?:string) => void,
     "leave": () => void,
     // only for logs
     "reconnect": (attemptNumber: number) => void,
@@ -20,5 +20,5 @@ export interface ClientToServerEvents {
     "offer": (fromSocketId: string, offer: RTCSessionDescriptionInit) => void,
     "answer": (fromSocketId: string, answer: RTCSessionDescriptionInit) => void,
     "ice-candidate": (fromSocketId: string, candidate: RTCIceCandidate ) => void,
-    "ready": (fromSocketId: string) => void,
+    "ready": (fromSocketId: string, username?:string) => void,
 }

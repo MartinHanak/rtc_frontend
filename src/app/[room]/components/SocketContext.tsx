@@ -39,8 +39,10 @@ type iceCandidateWithSocketId = {
 
 type readyWithSocketId = {
     fromSocketId: string,
-    ready: boolean
+    ready: boolean,
+    username?: string
 }
+
 
 export function SocketContextProvider({ children, roomId }: SocketContextProvider) {
 
@@ -89,9 +91,14 @@ export function SocketContextProvider({ children, roomId }: SocketContextProvide
             setIceCandidates((oldCandidates) => [...oldCandidates, { fromSocketId, candidate }])
         })
 
-        socketRef.current.on("ready", (fromSocketId: string) => {
+        socketRef.current.on("ready", (fromSocketId: string, username?: string) => {
+            let fromUsername = fromSocketId;
+            if (username) {
+                fromUsername = username
+            }
+
             console.log("All rooms participants are ready to start broadcasting");
-            setReady((previous) => [...previous, { fromSocketId, ready: true }])
+            setReady((previous) => [...previous, { fromSocketId, ready: true, username: fromUsername }])
         })
 
         return () => {
@@ -99,6 +106,7 @@ export function SocketContextProvider({ children, roomId }: SocketContextProvide
             setOffers([]);
             setAnswers([]);
             setIceCandidates([]);
+            setReady([]);
         }
     }, [roomId]);
 
