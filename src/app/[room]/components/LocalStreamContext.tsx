@@ -24,24 +24,8 @@ export function LocalStreamProvider({ children }: LocalStreamContext) {
             console.log('Socket connection not ready for local stream')
             return;
         }
-        console.log('Preparing local stream')
 
-        switch (roomState) {
-            case 'full':
-                alert(`Room ${roomId} is full`);
-                redirect("/");
-                break;
-            case 'created':
-                console.log('room created')
-                break;
-            case 'joined':
-                console.log('room joined')
-                if (socketRef && socketRef.current) {
-                    socketRef.current.emit("ready", socketRef.current.id);
-                }
-                break;
-        }
-
+        console.log('Preparing local stream');
 
         (async () => {
             try {
@@ -71,7 +55,7 @@ export function LocalStreamProvider({ children }: LocalStreamContext) {
             if (oldStream && oldStream.current) {
                 oldStream.current.getTracks().forEach((track) => track.stop());
             } else {
-                console.log(`Error: no stream or stream.current when local stream cleanup`)
+                console.log(`No stream or stream.current when local stream cleanup`)
             }
 
             oldStream.current = null;

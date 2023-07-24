@@ -2,6 +2,8 @@ import { MutableRefObject, createContext, useContext, useEffect, useRef, useStat
 import { initializeSocket } from "./initializeSocket";
 import { Socket } from "socket.io-client";
 import { ServerToClientEvents, ClientToServerEvents } from "@/app/types/types";
+import { redirect } from "next/navigation";
+
 
 interface SocketContextValue {
     socketRef: MutableRefObject<Socket<ServerToClientEvents, ClientToServerEvents> | null> | null,
@@ -110,7 +112,7 @@ export function SocketContextProvider({ children, roomId }: SocketContextProvide
                 fromUsername = username
             }
 
-            console.log("All rooms participants are ready to start broadcasting");
+            console.log("All room participants are ready to start broadcasting");
             setReady((previous) => [...previous, { fromSocketId, ready: true, username: fromUsername }])
         })
 
@@ -133,6 +135,26 @@ export function SocketContextProvider({ children, roomId }: SocketContextProvide
             socketRef.current?.disconnect();
         }
     }, [roomId]);
+
+    useEffect(() => {
+        if (roomState) {
+            switch (roomState) {
+                case 'full':
+                    alert(`Room ${roomId} is full`);
+                    redirect("/");
+                    break;
+                case 'created':
+                    console.log('room created')
+                    break;
+                case 'joined':
+                    console.log('room joined')
+                    if (socketRef && socketRef.current) {
+                        socketRef.current.emit("ready", socketRef.current.id);
+                    }
+                    break;
+            }
+        }
+    }, [roomState, roomId])
 
 
     // socket connection ready when roomState !== null
