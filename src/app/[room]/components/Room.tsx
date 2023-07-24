@@ -1,7 +1,7 @@
 'use client'
 
-import { useRef } from "react";
 import { RoomContext } from "./RoomContext";
+import { RoomContent } from "./RoomContent";
 
 
 interface Room {
@@ -10,18 +10,10 @@ interface Room {
 
 
 export default function Room({ roomId }: Room) {
-
-    const localVideo = useRef<HTMLVideoElement | null>(null);
-    const remoteVideo = useRef<HTMLVideoElement | null>(null);
-
-
-
+    // RoomContent has to wait for RoomContext to load
     return (
         <RoomContext roomId={roomId}>
-
-            <video ref={localVideo} autoPlay muted />
-            <video ref={remoteVideo} autoPlay muted></video>
-
+            <RoomContent />
         </RoomContext>
     )
 }

@@ -1,8 +1,15 @@
-import { createContext, useContext, useEffect, useRef } from "react";
+import { MutableRefObject, createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { useLocalStreamContext } from "./LocalStreamContext";
 import { useSocketContext } from "./SocketContext";
 
-const WebRTCContext = createContext(null);
+
+interface WebRTCContextValue {
+    connections: MutableRefObject<peerConnectionWithSocketId[]> | null,
+    streams: MutableRefObject<streamWithSocketId[]> | null,
+    ready: readyWithSocketId[]
+}
+
+const WebRTCContext = createContext<WebRTCContextValue>({ connections: null, streams: null, ready: [] });
 
 /*
 stun1.l.google.com:19302
@@ -18,7 +25,12 @@ interface RTCPeerConnectionConfig {
 const ICE_SERVERS: RTCPeerConnectionConfig = {
     iceServers: [
         {
-            urls: ['stun:stun1.l.google.com:19302', 'stun:stun2.l.google.com:19302', 'stun:stun3.l.google.com:19302', 'stun:stun4.l.google.com:19302']
+            urls: [
+                'stun:stun1.l.google.com:19302',
+                'stun:stun2.l.google.com:19302',
+                'stun:stun3.l.google.com:19302',
+                'stun:stun4.l.google.com:19302'
+            ]
         }
     ],
 };
@@ -37,13 +49,52 @@ type peerConnectionWithSocketId = {
     connection: RTCPeerConnection
 }
 
+type readyWithSocketId = {
+    fromSocketId: string,
+    ready: boolean,
+}
+
 export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
 
     const peerConnectionRef = useRef<peerConnectionWithSocketId[]>([]);
     const peerStreamRef = useRef<streamWithSocketId[]>([]);
+    const [peerStreamReady, setPeerStreamReady] = useState<readyWithSocketId[]>([])
 
     const { socketRef, roomState, offers, answers, iceCandidates, ready } = useSocketContext();
     const { streamRef: localStreamRef } = useLocalStreamContext();
+
+    // connection is saved only 1-to-1
+    // room hosts have many connections open
+    // others only 1
+    const createPeerConnection = useCallback((fromSocketId: string) => {
+        const connection = new RTCPeerConnection(ICE_SERVERS);
+
+        connection.onicecandidate = (event) => {
+
+            if (event.candidate) {
+
+                if (socketRef && socketRef.current) {
+                    socketRef.current.emit("ice-candidate", socketRef.current.id, event.candidate);
+                } else {
+                    console.log(`Socket not ready when ice-candidate event triggered.`)
+                }
+            }
+        }
+        connection.ontrack = (event: RTCTrackEvent) => {
+            const existingPeerStream = peerStreamRef.current.filter((stream) => stream.fromSocketId === fromSocketId)
+
+            if (existingPeerStream.length === 0) {
+                console.log(`Added peer stream`)
+
+                peerStreamRef.current.push({ fromSocketId, stream: event.streams[0] })
+
+                setPeerStreamReady((previous) => [...previous, { fromSocketId, ready: true }])
+            }
+        }
+
+        return connection;
+    }, [socketRef])
+
 
     useEffect(() => {
         // HOST ONLY function
@@ -112,7 +163,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
         return () => {
             console.log('handleCall cleanup')
         }
-    }, [ready, localStreamRef, roomState, socketRef])
+    }, [ready, localStreamRef, roomState, socketRef, createPeerConnection])
 
 
     // NON-host only: handle received offers
@@ -178,7 +229,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
         return () => {
             console.log('handleOffer cleanup')
         }
-    }, [offers, roomState, localStreamRef, socketRef]);
+    }, [offers, roomState, localStreamRef, socketRef, createPeerConnection]);
 
     // handle answer = host-only
     useEffect(() => {
@@ -220,11 +271,13 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
                 const newIceCandidate = new RTCIceCandidate(iceCandidate.candidate);
 
                 connection.connection.addIceCandidate(newIceCandidate)
-                    .then(() => console.log(`ICE candidate added successfully`))
+                    .then(() => {
+                        //console.log(connection.connection.iceConnectionState)
+                        console.log(`ICE candidate added successfully`)
+                    })
                     .catch((error) => console.log(error))
+
             }
-
-
         }
 
         return () => {
@@ -232,39 +285,12 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
         }
     }, [iceCandidates])
 
-    // connection is saved only 1-to-1
-    // room hosts have many connections open
-    // others only 1
-    const createPeerConnection = (fromSocketId: string) => {
-        const connection = new RTCPeerConnection(ICE_SERVERS);
-
-        connection.onicecandidate = (event) => {
-
-            if (event.candidate) {
-
-                if (socketRef && socketRef.current) {
-                    socketRef.current.emit("ice-candidate", socketRef.current.id, event.candidate);
-                } else {
-                    console.log(`Socket not ready when ice-candidate event triggered.`)
-                }
-            }
-        }
-        connection.ontrack = (event: RTCTrackEvent) => {
-            const existingPeerStream = peerStreamRef.current.filter((stream) => stream.fromSocketId === fromSocketId)
-
-            if (existingPeerStream.length === 0) {
-                peerStreamRef.current.push({ fromSocketId, stream: event.streams[0] })
-            }
-        }
-
-        return connection;
-    }
 
     // handle leaving events
 
 
     return (
-        <WebRTCContext.Provider value={null}>
+        <WebRTCContext.Provider value={{ streams: peerStreamRef, connections: peerConnectionRef, ready: peerStreamReady }}>
             {children}
         </WebRTCContext.Provider>
     )
