@@ -42,9 +42,21 @@ export function LocalStreamProvider({ children }: LocalStreamContext) {
                 break;
         }
 
+
         (async () => {
             try {
-                streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+                console.log(`Setting local stream`)
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+
+                // check if stream already set
+                // otherwise issues with double-render react strict mode
+                // because one stream is not cleaned-up and camera does not shut off
+                if (streamRef && streamRef.current) {
+                    console.log(`Local stream already set`);
+                    stream.getTracks().forEach((track) => track.stop());
+                } else {
+                    streamRef.current = stream;
+                }
                 setStreamReady(true);
 
             } catch (error) {
@@ -56,12 +68,16 @@ export function LocalStreamProvider({ children }: LocalStreamContext) {
         const oldStream = streamRef;
         return () => {
             console.log(`Local stream cleanup.`)
-
-            oldStream.current?.getTracks().forEach((track) => track.stop());
+            if (oldStream && oldStream.current) {
+                oldStream.current.getTracks().forEach((track) => track.stop());
+            } else {
+                console.log(`Error: no stream or stream.current when local stream cleanup`)
+            }
 
             oldStream.current = null;
         }
     }, [socketRef, roomId, roomState]);
+
 
     return (
         <LocalStreamContext.Provider value={{ streamRef }}>

@@ -60,7 +60,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
     const peerStreamRef = useRef<streamWithSocketId[]>([]);
     const [peerStreamReady, setPeerStreamReady] = useState<readyWithSocketId[]>([])
 
-    const { socketRef, roomState, offers, answers, iceCandidates, ready } = useSocketContext();
+    const { socketRef, roomState, offers, answers, iceCandidates, ready, idsLeft } = useSocketContext();
     const { streamRef: localStreamRef } = useLocalStreamContext();
 
     // connection is saved only 1-to-1
@@ -160,9 +160,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
             }
         }
 
-        return () => {
-            console.log('handleCall cleanup')
-        }
+
     }, [ready, localStreamRef, roomState, socketRef, createPeerConnection])
 
 
@@ -226,9 +224,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
             }
         }
 
-        return () => {
-            console.log('handleOffer cleanup')
-        }
+
     }, [offers, roomState, localStreamRef, socketRef, createPeerConnection]);
 
     // handle answer = host-only
@@ -249,9 +245,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
             }
         }
 
-        return () => {
-            console.log('handleAnswer cleanup')
-        }
+
     }, [answers])
 
     // ICE candidate
@@ -280,13 +274,51 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
             }
         }
 
-        return () => {
-            console.log('handle ICE Candidate cleanup')
-        }
+
     }, [iceCandidates])
 
+    // cleanup combined
+    useEffect(() => {
+
+        return () => {
+            console.log('WebRTC context cleanup');
+
+            for (const stream of peerStreamRef.current) {
+                stream.stream.getTracks().forEach((track) => track.stop())
+            }
+
+            for (const connection of peerConnectionRef.current) {
+                connection.connection.ontrack = null;
+                connection.connection.onicecandidate = null;
+                connection.connection.close()
+            }
+            peerConnectionRef.current = [];
+        }
+    }, [])
 
     // handle leaving events
+
+    useEffect(() => {
+        if (idsLeft.length > 0) {
+            console.log(`Someone left the connection`)
+            console.log(idsLeft)
+
+            for (const connection of peerConnectionRef.current) {
+                console.log(connection.fromSocketId)
+            }
+
+            peerConnectionRef.current = peerConnectionRef.current.filter((connection) => !idsLeft.includes(connection.fromSocketId))
+
+            for (const connection of peerConnectionRef.current) {
+                console.log(connection.fromSocketId)
+            }
+
+
+            peerStreamRef.current = peerStreamRef.current.filter((stream) => !idsLeft.includes(stream.fromSocketId))
+
+            setPeerStreamReady((previous) => previous.filter((ready) => !idsLeft.includes(ready.fromSocketId)))
+        }
+    }, [idsLeft])
 
 
     return (

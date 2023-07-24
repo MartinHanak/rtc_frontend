@@ -34,9 +34,9 @@ export function PeerStreams() {
 
             displayedStreams.map((stream, index) => {
                 return (
-                    <>
-                        <Video key={index} stream={stream} />
-                    </>
+
+                    <Video key={index} stream={stream} />
+
                 )
             })
 

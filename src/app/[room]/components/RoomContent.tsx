@@ -12,7 +12,7 @@ export function RoomContent() {
 
             <Chat />
 
-            {streamRef && streamRef.current && <Video stream={streamRef.current} />}
+            {null && streamRef && streamRef.current && <Video stream={streamRef.current} />}
 
             <PeerStreams />
 

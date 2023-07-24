@@ -13,7 +13,7 @@ export default function Room({ roomId }: Room) {
     // RoomContent has to wait for RoomContext to load
     return (
         <RoomContext roomId={roomId}>
-            <RoomContent />
+            {null && <RoomContent />}
         </RoomContext>
     )
 }

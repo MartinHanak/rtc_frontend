@@ -12,11 +12,12 @@ interface SocketContextValue {
     answers: answerWithSocketId[],
     iceCandidates: iceCandidateWithSocketId[],
     ready: readyWithSocketId[],
+    idsLeft: string[]
     // chat
     messages: messageWithSocketId[]
 }
 
-const SocketContext = createContext<SocketContextValue>({ socketRef: null, roomId: '', roomState: null, offers: [], answers: [], iceCandidates: [], ready: [], messages: [] });
+const SocketContext = createContext<SocketContextValue>({ socketRef: null, roomId: '', roomState: null, offers: [], answers: [], iceCandidates: [], ready: [], idsLeft: [], messages: [] });
 
 interface SocketContextProvider {
     children: React.ReactNode,
@@ -64,6 +65,7 @@ export function SocketContextProvider({ children, roomId }: SocketContextProvide
     const [iceCandidates, setIceCandidates] = useState<iceCandidateWithSocketId[]>([]);
 
     const [ready, setReady] = useState<readyWithSocketId[]>([]);
+    const [idsLeft, setIdsLeft] = useState<string[]>([]);
 
     // chat 
     const [messages, setMessages] = useState<messageWithSocketId[]>([])
@@ -112,12 +114,22 @@ export function SocketContextProvider({ children, roomId }: SocketContextProvide
             setReady((previous) => [...previous, { fromSocketId, ready: true, username: fromUsername }])
         })
 
+        socketRef.current.on("leave", (fromSocketId) => {
+            setIdsLeft((previous) => [...previous, fromSocketId])
+        })
+
         // chat messages
         socketRef.current.on("message", (fromSocketId: string, message: string) => {
             setMessages((previous) => [...previous, { fromSocketId, message }])
         })
 
         return () => {
+            console.log(`SOCKET DISCONNECTING`)
+
+            if (socketRef && socketRef.current) {
+                socketRef.current.emit('leave', socketRef.current.id)
+            }
+
             socketRef.current?.disconnect();
         }
     }, [roomId]);
@@ -126,7 +138,7 @@ export function SocketContextProvider({ children, roomId }: SocketContextProvide
     // socket connection ready when roomState !== null
     return (
         <>{roomState ?
-            <SocketContext.Provider value={{ socketRef, roomId, roomState, offers, answers, iceCandidates, ready, messages }}>
+            <SocketContext.Provider value={{ socketRef, roomId, roomState, offers, answers, iceCandidates, ready, idsLeft, messages }}>
                 {children}
             </SocketContext.Provider>
             :
