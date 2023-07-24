@@ -7,13 +7,16 @@ interface SocketContextValue {
     socketRef: MutableRefObject<Socket<ServerToClientEvents, ClientToServerEvents> | null> | null,
     roomId: string,
     roomState: roomState | null,
+    // webRTC
     offers: offerWithSocketId[],
     answers: answerWithSocketId[],
     iceCandidates: iceCandidateWithSocketId[],
-    ready: readyWithSocketId[]
+    ready: readyWithSocketId[],
+    // chat
+    messages: messageWithSocketId[]
 }
 
-const SocketContext = createContext<SocketContextValue>({ socketRef: null, roomId: '', roomState: null, offers: [], answers: [], iceCandidates: [], ready: [] });
+const SocketContext = createContext<SocketContextValue>({ socketRef: null, roomId: '', roomState: null, offers: [], answers: [], iceCandidates: [], ready: [], messages: [] });
 
 interface SocketContextProvider {
     children: React.ReactNode,
@@ -43,6 +46,11 @@ type readyWithSocketId = {
     username?: string
 }
 
+type messageWithSocketId = {
+    fromSocketId: string,
+    message: string
+}
+
 
 export function SocketContextProvider({ children, roomId }: SocketContextProvider) {
 
@@ -56,6 +64,9 @@ export function SocketContextProvider({ children, roomId }: SocketContextProvide
     const [iceCandidates, setIceCandidates] = useState<iceCandidateWithSocketId[]>([]);
 
     const [ready, setReady] = useState<readyWithSocketId[]>([]);
+
+    // chat 
+    const [messages, setMessages] = useState<messageWithSocketId[]>([])
 
 
     // cleanup socket on dismount 
@@ -101,12 +112,13 @@ export function SocketContextProvider({ children, roomId }: SocketContextProvide
             setReady((previous) => [...previous, { fromSocketId, ready: true, username: fromUsername }])
         })
 
+        // chat messages
+        socketRef.current.on("message", (fromSocketId: string, message: string) => {
+            setMessages((previous) => [...previous, { fromSocketId, message }])
+        })
+
         return () => {
             socketRef.current?.disconnect();
-            setOffers([]);
-            setAnswers([]);
-            setIceCandidates([]);
-            setReady([]);
         }
     }, [roomId]);
 
@@ -114,7 +126,7 @@ export function SocketContextProvider({ children, roomId }: SocketContextProvide
     // socket connection ready when roomState !== null
     return (
         <>{roomState ?
-            <SocketContext.Provider value={{ socketRef, roomId, roomState, offers, answers, iceCandidates, ready }}>
+            <SocketContext.Provider value={{ socketRef, roomId, roomState, offers, answers, iceCandidates, ready, messages }}>
                 {children}
             </SocketContext.Provider>
             :
