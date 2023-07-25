@@ -1,6 +1,7 @@
 import { MutableRefObject, createContext, useContext, useEffect, useRef, useState, useCallback } from "react";
 import { useLocalStreamContext } from "./LocalStreamContext";
 import { useSocketContext } from "./SocketContext";
+import { data } from "autoprefixer";
 
 
 interface WebRTCContextValue {
@@ -54,11 +55,19 @@ type readyWithSocketId = {
     ready: boolean,
 }
 
+type dataChannelWithSocketId = {
+    fromSocketId: string,
+    dataChannel: RTCDataChannel
+}
+
 export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
 
     const peerConnectionRef = useRef<peerConnectionWithSocketId[]>([]);
     const peerStreamRef = useRef<streamWithSocketId[]>([]);
-    const [peerStreamReady, setPeerStreamReady] = useState<readyWithSocketId[]>([])
+    const dataChannelRef = useRef<dataChannelWithSocketId[]>([]);
+
+    const [peerStreamReady, setPeerStreamReady] = useState<readyWithSocketId[]>([]);
+    const [dataChannelReady, setDataChannelReady] = useState<readyWithSocketId[]>([])
 
     const { socketRef, roomState, hostId, offers, answers, iceCandidates, ready, idsLeft } = useSocketContext();
     const { streamRef: localStreamRef } = useLocalStreamContext();
@@ -68,6 +77,24 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
     // others only 1
     const createPeerConnection = useCallback((fromSocketId: string) => {
         const connection = new RTCPeerConnection(ICE_SERVERS);
+
+        // data channels have to be created BEFORE answer/offer
+        // https://stackoverflow.com/questions/43788872/how-are-data-channels-negotiated-between-two-peers-with-webrtc/43788873#43788873
+
+        const dataChannel = connection.createDataChannel(fromSocketId, { negotiated: true, id: 0, ordered: false });
+
+        dataChannel.addEventListener('open', (event) => {
+            console.log(`Data channel opened`);
+            setDataChannelReady((previous) => [...previous, { fromSocketId, ready: true }])
+        })
+
+        dataChannel.addEventListener('close', () => {
+            console.log(`Data channel closed`)
+        })
+
+        dataChannel.addEventListener('message', () => {
+            console.log(`Data channel message received`)
+        })
 
         connection.onicecandidate = (event) => {
 
@@ -92,7 +119,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
             }
         }
 
-        return connection;
+        return { connection, dataChannel };
     }, [socketRef])
 
 
@@ -107,7 +134,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
         const handleCall = (fromSocketId: string) => {
             console.log(`Initializing WebRTC call.`)
 
-            const newConnection = createPeerConnection(fromSocketId);
+            const { connection: newConnection, dataChannel: newDataChannel } = createPeerConnection(fromSocketId);
 
             if (localStreamRef && localStreamRef.current) {
                 newConnection.addTrack(
@@ -142,7 +169,8 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
                 }
             })()
 
-            peerConnectionRef.current.push({ fromSocketId, connection: newConnection })
+            peerConnectionRef.current.push({ fromSocketId, connection: newConnection });
+            dataChannelRef.current.push({ fromSocketId, dataChannel: newDataChannel });
         }
 
         // every time ready array changes
@@ -178,7 +206,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
                 return;
             }
 
-            const newConnection = createPeerConnection(fromSocketId);
+            const { connection: newConnection, dataChannel: newDataChannel } = createPeerConnection(fromSocketId);
 
             if (localStreamRef && localStreamRef.current) {
                 newConnection.addTrack(
@@ -214,6 +242,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
             })();
 
             peerConnectionRef.current.push({ fromSocketId, connection: newConnection });
+            dataChannelRef.current.push({ fromSocketId, dataChannel: newDataChannel })
         }
 
         for (const offer of offers) {

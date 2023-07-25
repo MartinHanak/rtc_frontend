@@ -63,6 +63,7 @@ export function DataChannelContextProvider({ children }: DataChannelContextProvi
             return
         }
         console.log(`Host starts a data channel.`)
+        console.log(Date.now())
 
         for (const connectionState of ready) {
             const correspondingConnection = connections?.current.filter((connection) => connection.fromSocketId === connectionState.fromSocketId)
@@ -71,16 +72,18 @@ export function DataChannelContextProvider({ children }: DataChannelContextProvi
                 throw new Error(`Connection for ${connectionState.fromSocketId} not found when opening a data channel.`);
             }
 
+            console.log(`There are ${correspondingConnection.length} connections open`)
+
             const socketId = correspondingConnection[0].fromSocketId;
             const peerConnection = correspondingConnection[0].connection;
 
-            if (!(socketId in dataChannelRef.current)) {
-                console.log(`Creating a new data channel to ${socketId}`)
+            peerConnection.addEventListener('datachannel', (event) => {
+                console.log(`Data channel event`);
+                const dataChannel = event.channel;
 
-                const dataChannel = peerConnection.createDataChannel(socketId, { ordered: false });
                 handleDataChannel(dataChannel, socketId);
+            })
 
-            }
         }
     }, [ready, hostId, socketRef, connections, handleDataChannel])
 
@@ -95,17 +98,21 @@ export function DataChannelContextProvider({ children }: DataChannelContextProvi
                 continue;
             }
             console.log(`Start listening for new data channels`)
+            console.log(Date.now())
 
             const correspondingConnection = connections?.current.filter((connection) => connection.fromSocketId === hostId)
+
 
             if (!(correspondingConnection) || correspondingConnection.length === 0) {
                 throw new Error(`Connection for host ${connectionState.fromSocketId} not found when listening for a data channel.`);
             }
+            console.log(`There are ${correspondingConnection.length} connections open`);
 
             const connectionToHost = correspondingConnection[0].connection;
 
             connectionToHost.addEventListener('datachannel', (event) => {
-                console.log(`Received a datachannel event`)
+                console.log(`Data channel event`);
+
                 const dataChannel = event.channel;
 
                 handleDataChannel(dataChannel, hostId);

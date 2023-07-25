@@ -13,11 +13,9 @@ export function RoomContext({ children, roomId }: RoomContext) {
         <SocketContextProvider roomId={roomId}>
             <LocalStreamProvider>
                 <WebRTCContextProvider>
-                    <DataChannelContextProvider>
 
-                        {children}
+                    {children}
 
-                    </DataChannelContextProvider>
                 </WebRTCContextProvider>
             </LocalStreamProvider>
         </SocketContextProvider>
