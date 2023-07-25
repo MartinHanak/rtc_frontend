@@ -1,6 +1,7 @@
 import { SocketContextProvider } from "./SocketContext"
 import { LocalStreamProvider } from "./LocalStreamContext"
 import { WebRTCContextProvider } from "./WebRTCContext"
+import { DataChannelContextProvider } from "./DataChannelContext"
 
 interface RoomContext {
     children: React.ReactNode,
@@ -12,9 +13,11 @@ export function RoomContext({ children, roomId }: RoomContext) {
         <SocketContextProvider roomId={roomId}>
             <LocalStreamProvider>
                 <WebRTCContextProvider>
+                    <DataChannelContextProvider>
 
-                    {children}
+                        {children}
 
+                    </DataChannelContextProvider>
                 </WebRTCContextProvider>
             </LocalStreamProvider>
         </SocketContextProvider>
