@@ -28,8 +28,8 @@ const ICE_SERVERS: RTCPeerConnectionConfig = {
             urls: [
                 'stun:stun1.l.google.com:19302',
                 'stun:stun2.l.google.com:19302',
-                'stun:stun3.l.google.com:19302',
-                'stun:stun4.l.google.com:19302'
+                //'stun:stun3.l.google.com:19302',
+                //'stun:stun4.l.google.com:19302'
             ]
         }
     ],
@@ -60,7 +60,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
     const peerStreamRef = useRef<streamWithSocketId[]>([]);
     const [peerStreamReady, setPeerStreamReady] = useState<readyWithSocketId[]>([])
 
-    const { socketRef, roomState, offers, answers, iceCandidates, ready, idsLeft } = useSocketContext();
+    const { socketRef, roomState, hostId, offers, answers, iceCandidates, ready, idsLeft } = useSocketContext();
     const { streamRef: localStreamRef } = useLocalStreamContext();
 
     // connection is saved only 1-to-1
@@ -173,6 +173,10 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
         }
 
         const handleOffer = (fromSocketId: string, offer: RTCSessionDescriptionInit) => {
+            // non-host reacts only to host offers
+            if (fromSocketId !== hostId) {
+                return;
+            }
 
             const newConnection = createPeerConnection(fromSocketId);
 
@@ -212,7 +216,6 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
             peerConnectionRef.current.push({ fromSocketId, connection: newConnection });
         }
 
-        //handleOffer(newOffer.offer);
         for (const offer of offers) {
             const existingConnection = peerConnectionRef.current.filter((connection) =>
                 connection.fromSocketId === offer.fromSocketId)
@@ -225,15 +228,19 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
         }
 
 
-    }, [offers, roomState, localStreamRef, socketRef, createPeerConnection]);
+    }, [offers, roomState, localStreamRef, socketRef, createPeerConnection, hostId]);
 
-    // handle answer = host-only
+    // handle answer = HOST-ONLY
     useEffect(() => {
+        if (roomState !== "created") {
+            return;
+        }
+
         for (const answer of answers) {
             const correspondingConnection = peerConnectionRef.current.filter((connection) => connection.fromSocketId === answer.fromSocketId)
 
             if (correspondingConnection.length === 0) {
-                throw new Error(`No connection with socketId: ${answer.fromSocketId} found when answer received`)
+                console.log(`No connection with socketId: ${answer.fromSocketId} found when answer received`)
             } else {
                 const connection = correspondingConnection[0];
 
@@ -246,23 +253,66 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
         }
 
 
-    }, [answers])
+    }, [answers, roomState])
 
     // ICE candidate
     useEffect(() => {
 
         for (const iceCandidate of iceCandidates) {
+            // host handles all ICE-candidate
+            // others only ICE-candidates from hostId
+            if (roomState !== "created") {
+                if (iceCandidate.fromSocketId !== hostId) {
+                    continue;
+                }
+            }
+
             const correspondingConnection = peerConnectionRef.current.filter((connection) => connection.fromSocketId === iceCandidate.fromSocketId)
 
             if (correspondingConnection.length === 0) {
-                throw new Error(`No connection with socketId: ${iceCandidate.fromSocketId} found when ice-candidate received.`)
+                console.log(`No connection with socketId: ${iceCandidate.fromSocketId} found when ice-candidate received.`)
             } else {
                 const connection = correspondingConnection[0];
 
                 // check if already added ?
                 // right now: adds one candidate multiple times
 
+
                 const newIceCandidate = new RTCIceCandidate(iceCandidate.candidate);
+
+                // ICE-candidates are send to all users
+                // but they are specific to 1-to-1 connection
+                // avoid adding ICE-candidates that are not specified for this 1-to-1 connection
+                // code at the end of the page: https://developer.mozilla.org/en-US/docs/Web/API/RTCIceCandidate/usernameFragment
+
+                // issue: getParameters() method specified in docs does not exist
+
+                /*
+                const receivers = connection.connection.getReceivers();
+                receivers.forEach((receiver) => {
+                    let parameters = receiver.transport?.iceTransport?.
+                    console.log(parameters.usernameFragment)
+                    console.log(newIceCandidate.usernameFragment)
+
+                })
+                */
+                // SOLUTION:
+                const localSdp = connection.connection.remoteDescription?.sdp;
+                if (localSdp) {
+                    const iceUfragRegex = /a=ice-ufrag:(.+)\r?\n/;
+                    const match = localSdp.match(iceUfragRegex);
+                    const usernameFragment = match ? match[1] : null;
+
+                    // if connection to host has usernameFragment already set in remoteDescription
+                    // check incoming ICE cadidates usernameFragment
+                    // that specifies which user to go to
+                    // skip incoming ICE-candidates that are not meant for this connection
+                    if (usernameFragment) {
+                        if (newIceCandidate.usernameFragment !== usernameFragment) {
+                            continue;
+                        }
+                    }
+                }
 
                 connection.connection.addIceCandidate(newIceCandidate)
                     .then(() => {
@@ -275,7 +325,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
         }
 
 
-    }, [iceCandidates])
+    }, [iceCandidates, hostId, roomState])
 
     // cleanup combined
     useEffect(() => {
@@ -303,16 +353,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
             console.log(`Someone left the connection`)
             console.log(idsLeft)
 
-            for (const connection of peerConnectionRef.current) {
-                console.log(connection.fromSocketId)
-            }
-
             peerConnectionRef.current = peerConnectionRef.current.filter((connection) => !idsLeft.includes(connection.fromSocketId))
-
-            for (const connection of peerConnectionRef.current) {
-                console.log(connection.fromSocketId)
-            }
-
 
             peerStreamRef.current = peerStreamRef.current.filter((stream) => !idsLeft.includes(stream.fromSocketId))
 

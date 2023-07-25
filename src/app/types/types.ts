@@ -1,8 +1,8 @@
 
 export interface ServerToClientEvents {
     // room events, specific to one socket
-    "created": () => void,
-    "joined": () => void,
+    "created": (hostId: string) => void,
+    "joined": (hostId: string) => void,
     "full": () => void,
     // webRTC events
     "offer": (fromSocketId: string, offer: RTCSessionDescriptionInit) => void,

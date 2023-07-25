@@ -9,6 +9,7 @@ interface SocketContextValue {
     socketRef: MutableRefObject<Socket<ServerToClientEvents, ClientToServerEvents> | null> | null,
     roomId: string,
     roomState: roomState | null,
+    hostId: string,
     // webRTC
     offers: offerWithSocketId[],
     answers: answerWithSocketId[],
@@ -19,7 +20,7 @@ interface SocketContextValue {
     messages: messageWithSocketId[]
 }
 
-const SocketContext = createContext<SocketContextValue>({ socketRef: null, roomId: '', roomState: null, offers: [], answers: [], iceCandidates: [], ready: [], idsLeft: [], messages: [] });
+const SocketContext = createContext<SocketContextValue>({ socketRef: null, roomId: '', roomState: null, hostId: '', offers: [], answers: [], iceCandidates: [], ready: [], idsLeft: [], messages: [] });
 
 interface SocketContextProvider {
     children: React.ReactNode,
@@ -60,6 +61,7 @@ export function SocketContextProvider({ children, roomId }: SocketContextProvide
     // reference for socket connection for given room
     const socketRef = useRef<Socket<ServerToClientEvents, ClientToServerEvents> | null>(null);
     const [roomState, setRoomState] = useState<roomState | null>(null);
+    const [hostId, setHostId] = useState<string>('')
 
     // state for WebRTC offers, answers, ICE-candidates
     const [offers, setOffers] = useState<offerWithSocketId[]>([]);
@@ -84,11 +86,15 @@ export function SocketContextProvider({ children, roomId }: SocketContextProvide
         socketRef.current.on('full', () => {
             setRoomState('full')
         })
-        socketRef.current.on('created', () => {
-            setRoomState('created')
+        socketRef.current.on('created', (hostId: string) => {
+            setRoomState('created');
+            setHostId(hostId);
+            console.log(`Room created, hostId: ${hostId}`)
         })
-        socketRef.current.on('joined', () => {
+        socketRef.current.on('joined', (hostId: string) => {
             setRoomState('joined')
+            setHostId(hostId);
+            console.log(`Room joined, hostId: ${hostId}`)
         })
 
 
@@ -160,7 +166,7 @@ export function SocketContextProvider({ children, roomId }: SocketContextProvide
     // socket connection ready when roomState !== null
     return (
         <>{roomState ?
-            <SocketContext.Provider value={{ socketRef, roomId, roomState, offers, answers, iceCandidates, ready, idsLeft, messages }}>
+            <SocketContext.Provider value={{ socketRef, roomId, roomState, hostId, offers, answers, iceCandidates, ready, idsLeft, messages }}>
                 {children}
             </SocketContext.Provider>
             :
