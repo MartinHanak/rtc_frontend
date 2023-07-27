@@ -7,10 +7,12 @@ import { data } from "autoprefixer";
 interface WebRTCContextValue {
     connections: MutableRefObject<peerConnectionWithSocketId[]> | null,
     streams: MutableRefObject<streamWithSocketId[]> | null,
-    ready: readyWithSocketId[]
+    peerStreamReady: readyWithSocketId[],
+    dataChannels: MutableRefObject<dataChannelWithSocketId[]> | null,
+    dataChannelReady: readyWithSocketId[],
 }
 
-const WebRTCContext = createContext<WebRTCContextValue>({ connections: null, streams: null, ready: [] });
+const WebRTCContext = createContext<WebRTCContextValue>({ connections: null, streams: null, peerStreamReady: [], dataChannels: null, dataChannelReady: [] });
 
 /*
 stun1.l.google.com:19302
@@ -107,6 +109,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
                 }
             }
         }
+
         connection.ontrack = (event: RTCTrackEvent) => {
             const existingPeerStream = peerStreamRef.current.filter((stream) => stream.fromSocketId === fromSocketId)
 
@@ -314,7 +317,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
                 // avoid adding ICE-candidates that are not specified for this 1-to-1 connection
                 // code at the end of the page: https://developer.mozilla.org/en-US/docs/Web/API/RTCIceCandidate/usernameFragment
 
-                // issue: getParameters() method specified in docs does not exist
+                // issue: getParameters() method specified in docs does not exist, date: 26/7/2023
 
                 /*
                 const receivers = connection.connection.getReceivers();
@@ -392,7 +395,7 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
 
 
     return (
-        <WebRTCContext.Provider value={{ streams: peerStreamRef, connections: peerConnectionRef, ready: peerStreamReady }}>
+        <WebRTCContext.Provider value={{ streams: peerStreamRef, connections: peerConnectionRef, peerStreamReady: peerStreamReady, dataChannels: dataChannelRef, dataChannelReady: dataChannelReady }}>
             {children}
         </WebRTCContext.Provider>
     )

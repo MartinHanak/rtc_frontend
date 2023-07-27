@@ -7,12 +7,12 @@ export function PeerStreams() {
     const [displayedStreams, setDisplayedStreams] = useState<MediaStream[]>([]);
 
 
-    const { connections, streams, ready } = useWebRTCContext();
+    const { connections, streams, peerStreamReady } = useWebRTCContext();
 
     useEffect(() => {
         let newStreams: MediaStream[] = [];
 
-        for (const streamReady of ready) {
+        for (const streamReady of peerStreamReady) {
             const readyId = streamReady.fromSocketId;
             const readyStream = streams?.current.filter((stream) => stream.fromSocketId === readyId)
 
@@ -27,7 +27,7 @@ export function PeerStreams() {
         return () => {
             setDisplayedStreams([])
         }
-    }, [ready, streams])
+    }, [peerStreamReady, streams])
 
     return (
         <>{
