@@ -8,4 +8,6 @@ export abstract class State {
     }
 
     public abstract handleRender(): void;
+
+    public abstract handleCleanup(): void;
 }

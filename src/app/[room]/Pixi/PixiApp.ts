@@ -3,13 +3,10 @@ import { Application, Point, Sprite } from "pixi.js";
 import { Context } from "./state/Context";
 import { HomeScreenState } from "./state/HomeScreenState";
 
-export type applicationState = "homeScreen" | "loading" | "gameInitialization" | "gamePlaying" | "gameOver"
-
 export class PixiApp {
 
     private application: Application | null;
     private parentContainer: HTMLDivElement;
-    private applicationState: applicationState
     private stateContext: Context
 
     constructor(parentContainer: HTMLDivElement) {
@@ -28,7 +25,7 @@ export class PixiApp {
         // load textures
 
         // render current state
-        this.stateContext.render();
+        // this.stateContext.render();
     
         // append to DOM
         this.parentContainer.appendChild(this.application.view as HTMLCanvasElement);

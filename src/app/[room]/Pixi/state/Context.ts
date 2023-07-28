@@ -12,10 +12,13 @@ export class Context {
 
     public transitionTo(state: State) {
         this.state = state;
-        this.state.setContext(this)
+        this.state.setContext(this);
+        this.render();
     }
 
     public render() {
+        // clean-up previous state
+        this.state.handleCleanup();
         // render app
         this.state.handleRender();
     }
