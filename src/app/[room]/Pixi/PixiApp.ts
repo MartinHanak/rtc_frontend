@@ -3,6 +3,7 @@ import { Application, Point, Sprite } from "pixi.js";
 import { Context } from "./state/Context";
 import { HomeScreenState } from "./state/HomeScreenState";
 
+
 export class PixiApp {
 
     private application: Application | null;
