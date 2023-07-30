@@ -1,4 +1,4 @@
-import { Point, Sprite } from "pixi.js";
+import { Container, Point, Sprite } from "pixi.js";
 import { StatusEffect, StatusEffectType } from "./StatusEffect";
 
 export abstract class Entity {
@@ -7,6 +7,7 @@ export abstract class Entity {
     private id: string
     private name: string;
     private sprite: Sprite;
+    private currentSpriteContainer: Container;
 
     private _position: Point = new Point(0, 0);
     private _speed: number = 20;
@@ -26,6 +27,8 @@ export abstract class Entity {
         this.id = id;
         this.name = name;
         this.sprite = sprite;
+        this.currentSpriteContainer = new Container();
+        this.currentSpriteContainer.addChild(this.sprite);
     }
 
 
