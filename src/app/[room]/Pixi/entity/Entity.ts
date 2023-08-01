@@ -5,7 +5,7 @@ import { pointInput } from "../object/Map";
 export abstract class Entity {
 
     // visual representation;
-    private id: string
+    private id: string;
     private name: string;
     private sprite: Sprite;
     private currentSpriteContainer: Container;
@@ -155,19 +155,20 @@ export abstract class Entity {
 
     // update Entity from arraybuffer
     public updateFromArrayBuffer(buffer: ArrayBuffer) {
-        // array buffer has same structure as toArrayBuffer
+        // array buffer has same structure as toBufferView
         if(buffer.byteLength !== this.arrayBufferByteLength) {
             throw new Error(`Update array buffer has different length ${buffer.byteLength} than expected ${this.arrayBufferByteLength}`)
         }
 
         const bufferView = new Float64Array(buffer);
 
-        this.position = [ bufferView[0],  bufferView[1]];
-        this.velocity = [bufferView[2], bufferView[3]];
+        this.position = [ bufferView[0], bufferView[1] ];
+        this.velocity = [ bufferView[2], bufferView[3] ];
 
         Object.values( StatusEffectType ).forEach((value: StatusEffectType, index: number) => {
             // check if status effect has non-zero duration
             if(bufferView[5 + index * STATUS_EFFECT_LENGTH] && bufferView[5 + index * STATUS_EFFECT_LENGTH] > 0) {
+
                 this._statusEffects[value].startTime = bufferView[4 + index * STATUS_EFFECT_LENGTH];
                 this._statusEffects[value].duration  = bufferView[5 + index * STATUS_EFFECT_LENGTH];
                 // index converted to value

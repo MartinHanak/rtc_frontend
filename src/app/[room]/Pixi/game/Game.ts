@@ -6,6 +6,7 @@ import { Npc } from "../entity/Npc";
 import { Player } from "../entity/Player";
 import { Map } from "../object/Map";
 import { Entity } from "../entity/Entity";
+import { GameStateBuffer } from "./GameStateBuffer";
 
 // Server is authoritative, Game has to make corrections if client and server disagree
 export class Game {
@@ -17,17 +18,14 @@ export class Game {
 
     private map; // background + boundaries + static assets
 
-    private serverStateBuffer;
-    private localStateBuffer;
+    private serverStateBuffer : GameStateBuffer;
+   // private localStateBuffer : GameStateBuffer;
     private localCommandsBuffer;
 
     constructor(map: Map, players: Player[], npcs: Npc[]) {
         this.map = map;
-
         this.entities = [...players, ...npcs]
-
         this.simulationTime = 0;
-
         this.initializeEntityPositions();
     }
 
