@@ -76,9 +76,11 @@ export class Game {
         this.entities.forEach((entity) => {
             console.log(entity.position);
         })
-        const container = new Container();
-        container.x = 0
-        container.y = 0
+
+        const container = this.map.getCurrentFrame();
+        container.x = 0;
+        container.y = 0;
+
 
         // using the gamestate update all objects in the current game
 

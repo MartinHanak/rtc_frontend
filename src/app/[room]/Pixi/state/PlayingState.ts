@@ -32,8 +32,8 @@ export class PlayingState extends State {
         // game test
 
         const test = Sprite.from("https://pixijs.io/pixi-react/img/bunny.png");
-        test.x = 200;
-        test.y = 200;
+        test.x = 0;
+        test.y = 0;
 
         this.context.app.stage.addChild(test);
         
