@@ -8,9 +8,9 @@ export class Map {
     private boundaryPoints: Point[];
     private backgroundImage: Sprite;
 
-    constructor(boundaryPoint: pointInput[], background: Sprite, staticAssets: StaticAsset[]) {
+    constructor(boundaryPoint: pointInput[], background: Sprite, staticAssets?: StaticAsset[]) {
         this.backgroundImage = background;
-        this.staticAssets = staticAssets;
+        this.staticAssets = staticAssets?  staticAssets : [] ;
         this.boundaryPoints = [];
         boundaryPoint.forEach((pointInput) => {
             this.boundaryPoints.push(new Point(pointInput[0], pointInput[1]));

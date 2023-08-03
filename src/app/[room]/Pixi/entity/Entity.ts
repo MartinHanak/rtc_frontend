@@ -21,7 +21,7 @@ export abstract class Entity {
 
     private _attackCoolDownTime: number = 1000; // ms
     private _blockCoolDownTime: number = 2000;
-    private _statusEffects: {[type in StatusEffectType] : StatusEffect } 
+    private _statusEffects: Record<StatusEffectType, StatusEffect>
     
 
     constructor(id: string, name: string, sprite: Sprite) {
@@ -33,9 +33,22 @@ export abstract class Entity {
         this.currentSpriteContainer.addChild(this.sprite);
 
         // 0 duration status effect is considered empty
-        Object.values(StatusEffectType).forEach((value, index) => {
-            this._statusEffects[value] = new StatusEffect(0,0,value,0,0);
+        
+        this._statusEffects = Object.fromEntries(Object.values(StatusEffectType).map((value: StatusEffectType) => {
+            return [StatusEffectType[value], new StatusEffect(0,0,StatusEffectType[value],0,0)]
+        })) as Record<StatusEffectType, StatusEffect>
+        
+        /*
+        this._statusEffects = {};
+        this._statusEffects.ATTACK = new StatusEffect(0,0,StatusEffectType['ATTACK'],0,0)
+        this._statusEffects.BLOCK = new StatusEffect(0,0,StatusEffectType['BLOCK'],0,0)
+        this._statusEffects.PUSHBACK = new StatusEffect(0,0,StatusEffectType['PUSHBACK'],0,0)
+        */
+        /*
+        Object.values(StatusEffectType).forEach((value: StatusEffectType, index) => {
+            this._statusEffects[value] = new StatusEffect(0,0,StatusEffectType[value],0,0);
         })
+        */
     }
 
 
@@ -45,6 +58,8 @@ export abstract class Entity {
 
     set position([x,y] : pointInput) {
         this._position.set(x, y);
+        this.sprite.x = x;
+        this.sprite.y = y;
     }
 
     get velocity() : Point {
@@ -91,14 +106,15 @@ export abstract class Entity {
 
     public resetStatusEffect(type: StatusEffectType) {
         // 0 duration is considered empty
-        this._statusEffects[type] = new StatusEffect(0,0,type,0,0);
+        this._statusEffects[type] = new StatusEffect(0,0,StatusEffectType[type],0,0);
     }
 
 
     // return what to render
     // includes movement direction and status effects 
     public getCurrentSprite(simulationTime: number) {
-        
+        // temporary = static sprite
+        return this.sprite;
     }
 
     get arrayBufferByteLength() {

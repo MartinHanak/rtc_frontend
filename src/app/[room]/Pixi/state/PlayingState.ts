@@ -2,6 +2,7 @@ import { text } from "stream/consumers";
 import { GameOverState } from "./GameOverState";
 import { State } from "./State";
 import { Text, Sprite } from "pixi.js";
+import { appendFile } from "fs";
 
 export class PlayingState extends State {
     public handleRender() {
@@ -35,6 +36,7 @@ export class PlayingState extends State {
         test.y = 200;
 
         this.context.app.stage.addChild(test);
+        
         this.context.app.ticker.add((delta) => {
             // display texture for current app state
 
@@ -45,6 +47,17 @@ export class PlayingState extends State {
             // render new game state if playing
             
         })
+        
+
+
+
+
+        // test game
+        const game = this.context.appWrapper.initializeGame();
+
+
+        const frame = game.getCurrentFrame();
+        this.context.app.stage.addChild(frame);
 
     }
 

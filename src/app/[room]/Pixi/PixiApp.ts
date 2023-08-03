@@ -1,7 +1,17 @@
 "use client"
-import { Application, Point, Sprite } from "pixi.js";
+import { Application, Point, Sprite, Texture } from "pixi.js";
 import { Context } from "./state/Context";
 import { HomeScreenState } from "./state/HomeScreenState";
+import { Player } from "./entity/Player";
+import { Npc } from "./entity/Npc";
+import { Map, pointInput } from "./object/Map";
+import { Game } from "./game/Game";
+
+type playerInput = {
+    id: string,
+    name: string,
+    dataChannel: RTCDataChannel
+}
 
 
 export class PixiApp {
@@ -10,10 +20,14 @@ export class PixiApp {
     private parentContainer: HTMLDivElement;
     private stateContext: Context
 
-    constructor(parentContainer: HTMLDivElement) {
+    public playerInput: playerInput[];
+
+    constructor(parentContainer: HTMLDivElement, players: playerInput[]) {
         console.log(`Initializing PixiApp`);
 
         this.parentContainer = parentContainer;
+
+        this.playerInput = players;
 
         this.application = new Application<HTMLCanvasElement>({
             backgroundColor: 0x3495ed,
@@ -21,7 +35,7 @@ export class PixiApp {
             height: this.getSizeFromParent().height
         });
 
-        this.stateContext = new Context(this.application, new HomeScreenState());
+        this.stateContext = new Context(this, this.application, new HomeScreenState());
 
         // load textures
 
@@ -64,6 +78,29 @@ export class PixiApp {
         }
         return { width, height }
     }
+
+    // used for local AND server game initialization
+    public initializeGame() {
+        // if host: start server game + start server
+        const testTexture = Texture.from("https://pixijs.io/pixi-react/img/bunny.png");
+        const testId = 'testId';
+        const testName = 'MyName';
+
+        const testPlayer = new Player(testId, testName, new Sprite(testTexture));
+
+        const testNpc1 = new Npc('npc1','npc1',new Sprite(testTexture));
+        const testNpc2 = new Npc('npc2','npc2',new Sprite(testTexture));
+
+        const mapBoundaryPoints : pointInput[] = [[100,100],[100,900],[900,900],[900,100]];
+        const testMap = new Map(mapBoundaryPoints, new Sprite(testTexture));
+
+        const testGame = new Game(testMap,[testPlayer],[testNpc1, testNpc2]);
+        console.log(`New game created`)
+        console.log(testGame);
+        return testGame;
+    }
+
+    
 
  
 

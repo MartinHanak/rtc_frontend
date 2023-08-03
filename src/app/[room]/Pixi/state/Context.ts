@@ -1,11 +1,14 @@
 import { Application } from "pixi.js";
 import { State } from "./State";
+import { PixiApp } from "../PixiApp";
 
 export class Context {
     private state: State;
     public app: Application;
+    public appWrapper: PixiApp;
 
-    constructor(app : Application, state: State) {
+    constructor(appWrapper: PixiApp,  app : Application, state: State) {
+        this.appWrapper = appWrapper;
         this.app = app;
         this.transitionTo(state);
     }
