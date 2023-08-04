@@ -7,11 +7,13 @@ export class CommandBuffer {
     // command buffer = linked list
     private head: ListNode | null;
     private tail: ListNode | null;
-    public bufferLength: number = 0;
+    public bufferLength: number ;
+    public lastInsertedTime: number ;
 
 
     constructor() {
-        
+        this.bufferLength = 0
+        this.lastInsertedTime = 0;
     }
 
     public insertCommand(time: number, command: ArrayBuffer) {
@@ -23,6 +25,7 @@ export class CommandBuffer {
             this.tail.next = new ListNode(time, command);
             this.bufferLength += 1;
         }
+        this.lastInsertedTime = time;
     }
 
     // remove all commands up to the specified time

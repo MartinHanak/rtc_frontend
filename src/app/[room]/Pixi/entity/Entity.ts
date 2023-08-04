@@ -5,7 +5,7 @@ import { pointInput } from "../object/Map";
 export abstract class Entity {
 
     // visual representation;
-    private id: string;
+    public id: string;
     private name: string;
     private sprite: Sprite;
     private currentSpriteContainer: Container;

@@ -21,8 +21,8 @@ export class Map {
     }
 
     // given one point return true/false if outside the map/not
-    public isOutsideMap(coordinate: Point) {
-        return false;
+    public containsPoint(coordinate: Point) {
+        return this.graphics.containsPoint(coordinate);
     } 
 
     public initiateMapGraphics() {
@@ -56,7 +56,8 @@ export class Map {
         console.log(`Creating map`)
         console.log(this.boundaryPoints);
 
-        container.addChild(this.graphics)
+        container.addChild(this.graphics);
+        container.addChild(this.backgroundImage);
 
         return container;
     }

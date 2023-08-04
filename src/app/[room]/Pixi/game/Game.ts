@@ -49,6 +49,17 @@ export class Game {
         }
     }
 
+    get playerIds() {
+        const ids : string[] = [];
+        this.entities.forEach((entity) => {
+            if(entity instanceof Player) {
+                ids.push(entity.id);
+            }
+        })
+
+        return ids;
+    }
+
     // given current game state 
     // update to (previous time + time) game state
     public progressGameState(time: number) {

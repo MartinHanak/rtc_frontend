@@ -47,10 +47,6 @@ export class PlayingState extends State {
             // render new game state if playing
             
         })
-        
-
-
-
 
         // test game
         const game = this.context.appWrapper.initializeGame();
