@@ -15,7 +15,7 @@ export class Game {
     private simulationTime : number;
 
     // players and npcs, npcs at the end
-    private entities : Entity[];
+    private entities: Record<string, Entity> ;
 
     private map; // background + boundaries + static assets
 
@@ -25,7 +25,15 @@ export class Game {
 
     constructor(map: Map, players: Player[], npcs: Npc[]) {
         this.map = map;
-        this.entities = [...players, ...npcs]
+
+        this.entities = {};
+        players.forEach((player) => {
+            this.entities[player.id] = player;
+        })
+        npcs.forEach((npc) => {
+            this.entities[npc.id] = npc;
+        })
+
         this.simulationTime = 0;
         this.initializeEntityPositions();
 
@@ -51,11 +59,12 @@ export class Game {
 
     get playerIds() {
         const ids : string[] = [];
-        this.entities.forEach((entity) => {
-            if(entity instanceof Player) {
-                ids.push(entity.id);
+
+        for(const entityId in this.entities) {
+            if(this.entities[entityId] instanceof Player) {
+                ids.push(this.entities[entityId].id);
             }
-        })
+        }
 
         return ids;
     }
@@ -84,9 +93,6 @@ export class Game {
     // assume that current Game values = values for the render frame
     public getCurrentFrame() : Container {
         console.log('Current frame');
-        this.entities.forEach((entity) => {
-            console.log(entity.position);
-        })
 
         const container = this.map.getCurrentFrame();
         container.x = 0;
@@ -97,8 +103,8 @@ export class Game {
 
         // map will be static
         // need to update npc and player position + statusEffects
-        for(const entity of this.entities) {
-            container.addChild(entity.getCurrentSprite(0));
+        for(const entityId in this.entities) {
+            container.addChild(this.entities[entityId].getCurrentSprite(0))
         }
 
         console.log(container)
@@ -108,7 +114,7 @@ export class Game {
  
 
     get entitiesNumber() {
-        return this.entities.length;
+        return Object.keys(this.entities).length;
     }
 
     get entityArrayBufferLength() {
