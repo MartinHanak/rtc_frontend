@@ -3,6 +3,7 @@ import { GameOverState } from "./GameOverState";
 import { State } from "./State";
 import { Text, Sprite } from "pixi.js";
 import { appendFile } from "fs";
+import { Player } from "../entity/Player";
 
 export class PlayingState extends State {
     public handleRender() {
@@ -54,6 +55,33 @@ export class PlayingState extends State {
 
         const frame = game.getCurrentFrame();
         this.context.app.stage.addChild(frame);
+
+        const localPlayerId = 'testId'; //this.context.appWrapper.localId;
+        const localPlayer = game.getEntity(localPlayerId) as Player;
+
+        this.context.app.ticker.add((delta) => {
+            // read user input (multiple inputs combined into one command)
+
+            // test = static command TEMPORARY
+
+            // update game current command
+            localPlayer.updateCurrentCommand(
+                game.time,
+                1,0,
+                20,0,
+                false,false
+            )
+            localPlayer.applyCurrentCommand();
+
+            // update game state (client-side prediction)
+            // later: add server-check (server reconsiliation)
+            game.progressGameState(delta);
+
+
+            // send command to server
+
+        
+        })
 
     }
 

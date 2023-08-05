@@ -18,16 +18,21 @@ export class PixiApp {
 
     private application: Application | null;
     private parentContainer: HTMLDivElement;
-    private stateContext: Context
+    private stateContext: Context;
+
+    public localId: string;
+    public hostId: string;
 
     public playerInput: playerInput[];
 
-    constructor(parentContainer: HTMLDivElement, players: playerInput[]) {
+    constructor(parentContainer: HTMLDivElement, players: playerInput[], localId: string, hostId: string) {
         console.log(`Initializing PixiApp`);
 
         this.parentContainer = parentContainer;
 
         this.playerInput = players;
+        this.localId = localId;
+        this.hostId = hostId;
 
         this.application = new Application<HTMLCanvasElement>({
             backgroundColor: 0x3495ed,

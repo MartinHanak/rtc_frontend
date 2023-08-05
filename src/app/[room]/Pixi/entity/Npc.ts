@@ -6,7 +6,7 @@ export class Npc extends Entity {
         super(id,name,sprite)
     }
 
-    move() {
+    move(deltaTime: number) {
         // movement speed + pushBack speed
     }
 }

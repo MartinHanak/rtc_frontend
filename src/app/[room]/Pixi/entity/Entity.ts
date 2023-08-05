@@ -71,7 +71,7 @@ export abstract class Entity {
     }
 
     // update position
-    public abstract move(): void;
+    public abstract move(deltaTime: number): void;
 
     public attack(startTime: number, x: number, y: number) {
 

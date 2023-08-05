@@ -14,6 +14,10 @@ export class Command {
     // velocity = combination of all user inputs (pushback not included)
     private intendedVelocity: Point;
 
+    get velocity() {
+        return this.intendedVelocity;
+    }
+
     // whether or not buttons were pressed for different status effects 
     // only attack/block (pushback is result of other players actions)
     private statusActions: {[type in StatusEffectType] : boolean } 
@@ -25,6 +29,7 @@ export class Command {
 
         this.intendedVelocity = new Point(vel_x, vel_y);
 
+        this.statusActions = {} as {[type in StatusEffectType] : boolean } ;
         this.statusActions.ATTACK = attack;
         this.statusActions.BLOCK = block;
     }

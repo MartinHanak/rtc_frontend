@@ -13,6 +13,9 @@ import { CommandBuffer } from "./CommandBuffer";
 export class Game {
 
     private simulationTime : number;
+    get time() {
+        return this.simulationTime;
+    }
 
     // players and npcs, npcs at the end
     private entities: Record<string, Entity> ;
@@ -48,12 +51,14 @@ export class Game {
 
         const anglePerEntity = 2 *  Math.PI / entitiesNumber;
 
-        for(let i = 0; i < entitiesNumber; i++) {
+        let i = 0;
+        for(const entityId in this.entities) {
             let new_x = radius * Math.cos(anglePerEntity * i) + centerPosition.x;
             let new_y = radius * Math.sin(anglePerEntity * i) + centerPosition.y;
 
-            this.entities[i].position =  [new_x, new_y];
+            this.entities[entityId].position = [new_x, new_y];
 
+            i += 1;
         }
     }
 
@@ -69,11 +74,22 @@ export class Game {
         return ids;
     }
 
+    public getEntity(id: string) {
+        if(!(id in this.entities)) {
+            throw new Error(`Entity with the required id: ${id} not found.`)
+        }
+
+        return this.entities[id];
+    }
+
     // given current game state 
     // update to (previous time + time) game state
     public progressGameState(time: number) {
         // hit registration
         // movement
+        for(const entityId in this.entities) {
+            this.entities[entityId].move(time);
+        }
         // other...
         // update time
         this.simulationTime = this.simulationTime + time;
