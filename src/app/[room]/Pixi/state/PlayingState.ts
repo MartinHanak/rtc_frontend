@@ -65,12 +65,8 @@ export class PlayingState extends State {
             // test = static command TEMPORARY
 
             // update game current command
-            localPlayer.updateCurrentCommand(
-                game.time,
-                1,0,
-                20,0,
-                false,false
-            )
+            this.context.appWrapper.localInput.updatePlayerCommandFromLocalInput(localPlayer, game.time);
+
             localPlayer.applyCurrentCommand();
 
             // update game state (client-side prediction)

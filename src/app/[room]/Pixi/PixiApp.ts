@@ -6,6 +6,7 @@ import { Player } from "./entity/Player";
 import { Npc } from "./entity/Npc";
 import { Map, pointInput } from "./object/Map";
 import { Game } from "./game/Game";
+import { InputListener } from "./game/InputListener";
 
 type playerInput = {
     id: string,
@@ -23,12 +24,17 @@ export class PixiApp {
     public localId: string;
     public hostId: string;
 
+    public localInput: InputListener;
     public playerInput: playerInput[];
 
     constructor(parentContainer: HTMLDivElement, players: playerInput[], localId: string, hostId: string) {
         console.log(`Initializing PixiApp`);
 
         this.parentContainer = parentContainer;
+
+        // start listening for user inputs
+        this.localInput = new InputListener();
+        this.localInput.start();
 
         this.playerInput = players;
         this.localId = localId;
@@ -111,6 +117,7 @@ export class PixiApp {
 
     public cleanup() {
         console.log(`Cleaning up PixiApp.`)
+        this.localInput.stop();
         if(this.application) {
             this.application.stop();
             this.application.destroy(true);

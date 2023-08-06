@@ -15,6 +15,10 @@ export abstract class Entity {
     private _pushBackSpeed: number = 40;
     private _velocity: Point = new Point(0, 0); // does not include push-back from others
 
+    get speed() {
+        return this._speed;
+    }
+
 
     private _attackDuration: number = 500;
     private _blockDuration: number = 1000;
