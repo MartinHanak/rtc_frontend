@@ -49,7 +49,7 @@ export class Server {
             if(!startGameProgress) {
                 startGameProgress = true
                 for(const playerId in this.playerCommands) {
-                    if(this.playerCommands[playerId].lastInsertedTime < this.msPerTick) {
+                    if(this.playerCommands[playerId].bufferLength < 10) {
                         startGameProgress = false;
                         break;
                     }
@@ -58,7 +58,7 @@ export class Server {
             
             
             if(startGameProgress) {
-                
+
                 console.log(`All players sent enough commands for one server tick`);
 
                 for(let step = 0; step < this.stepsInOneTick; step++) {

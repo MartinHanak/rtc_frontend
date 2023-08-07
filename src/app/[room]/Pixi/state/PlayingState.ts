@@ -7,6 +7,9 @@ import { Player } from "../entity/Player";
 import { Server } from "../game/Server";
 
 export class PlayingState extends State {
+
+    private server: Server;
+
     public handleRender() {
         // reset stage and ticker
 
@@ -62,12 +65,12 @@ export class PlayingState extends State {
 
         if(this.context.appWrapper.localId === this.context.appWrapper.hostId) {
             // server initilizes its own instance of the same game
-            const server = new Server(
+            this.server = new Server(
                 this.context.appWrapper.initializeGame(),
                 this.context.appWrapper.messenger
             );
 
-           server.start();
+           this.server.start();
         }
 
         const frame = game.getCurrentFrame();
@@ -110,6 +113,10 @@ export class PlayingState extends State {
     }
 
     public handleCleanup(): void {
-        this.context.app.stage.removeChildren()
+        this.context.app.stage.removeChildren();
+
+        if(this.server) {
+            this.server.stop();
+        }
     }
 }

@@ -84,22 +84,8 @@ export class Messenger {
                     throw new Error(`Messenger dit not find data channel corresponding to the player ${playerId}.`);
                 }
 
-                this.dataChannels[playerId].addEventListener('message', (event : MessageEvent<Blob | ArrayBuffer>) => {
-                    
-                    if(event.data instanceof Blob) {
-                        event.data.arrayBuffer()
-                        .then((arrayBuffer) => {
-                            let time = this.readArrayBufferTime(arrayBuffer);
-                            playerBuffers[playerId].insertCommand(time, arrayBuffer);
-                        })
-                        .catch((err) => console.log(err))
-                    } else if(event.data instanceof ArrayBuffer) {
-                        let time = this.readArrayBufferTime(event.data);
-                        playerBuffers[playerId].insertCommand(time, event.data)
-                    } else {
-                        throw new Error(`Incoming command is not either Blob or ArrayBuffer`)
-                    }
-                    
+                this.dataChannels[playerId].addEventListener('message', (event : MessageEvent<ArrayBuffer>) => {
+                    this.insertCommand(event.data, playerBuffers[playerId]);
                 })
             } else  {
                 // host event
@@ -151,20 +137,11 @@ export class Messenger {
             // for now: only one data channel should be open for non-hosts
             for(const playerId in this.dataChannels) {
 
-                this.dataChannels[playerId].addEventListener('message', (event: MessageEvent<Blob | ArrayBuffer>) => {
-                    if(event.data instanceof Blob) {
-                        event.data.arrayBuffer()
-                        .then((arrayBuffer) => {
-                            let time = this.readArrayBufferTime(arrayBuffer);
-                            buffer.insertGameState(time, arrayBuffer);
-                        })
-                        .catch((err) => console.log(err))
-                    } else if(event.data instanceof ArrayBuffer) {
-                        let time = this.readArrayBufferTime(event.data);
-                        buffer.insertGameState(time,event.data);
-                    } else {
-                        throw new Error(`Incoming game state is not either Blob or ArrayBuffer`)
-                    }
+                this.dataChannels[playerId].addEventListener('message', (event: MessageEvent<ArrayBuffer>) => {
+
+                    let time = this.readArrayBufferTime(event.data);
+                    buffer.insertGameState(time,event.data);
+
                 })
 
             }

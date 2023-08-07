@@ -85,6 +85,8 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
 
         const dataChannel = connection.createDataChannel(fromSocketId, { negotiated: true, id: 0, ordered: false });
 
+        dataChannel.binaryType = 'arraybuffer';
+
         dataChannel.addEventListener('open', (event) => {
             console.log(`Data channel opened`);
             setDataChannelReady((previous) => [...previous, { fromSocketId, ready: true }])

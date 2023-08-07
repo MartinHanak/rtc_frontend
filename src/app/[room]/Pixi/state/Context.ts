@@ -14,6 +14,10 @@ export class Context {
     }
 
     public transitionTo(state: State) {
+        if(this.state) {
+            // run cleanup of the old state
+            this.state.handleCleanup();
+        }
         this.state = state;
         this.state.setContext(this);
         this.render();
