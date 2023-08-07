@@ -49,7 +49,7 @@ export class Command {
         return 40 + (STATUS_EFFECT_NUMBER - 1) * 8;
     }
 
-    public toBufferView() {
+    public toArrayBuffer() {
         const buffer = new ArrayBuffer(this.arrayBufferLength);
         const bufferView = new Float64Array(buffer);
 
@@ -65,7 +65,7 @@ export class Command {
         bufferView[5] = this.statusActions.ATTACK ? 1 : 0; 
         bufferView[6] = this.statusActions.BLOCK ? 1 : 0;
 
-        return bufferView;
+        return buffer;
     }
 
     public updateFromArrayBuffer(buffer: ArrayBuffer) {

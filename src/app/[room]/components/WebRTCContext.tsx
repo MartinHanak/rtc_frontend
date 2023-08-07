@@ -42,22 +42,22 @@ interface WebRTCContextProvider {
     children: React.ReactNode
 }
 
-type streamWithSocketId = {
+export type streamWithSocketId = {
     fromSocketId: string,
     stream: MediaStream
 }
 
-type peerConnectionWithSocketId = {
+export type peerConnectionWithSocketId = {
     fromSocketId: string,
     connection: RTCPeerConnection
 }
 
-type readyWithSocketId = {
+export type readyWithSocketId = {
     fromSocketId: string,
     ready: boolean,
 }
 
-type dataChannelWithSocketId = {
+export type dataChannelWithSocketId = {
     fromSocketId: string,
     dataChannel: RTCDataChannel
 }

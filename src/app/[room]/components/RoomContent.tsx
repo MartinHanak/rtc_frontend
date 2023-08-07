@@ -5,17 +5,21 @@ import { useLocalStreamContext } from "./LocalStreamContext";
 import { Video } from "./Video";
 import { Chat } from "./chat/Chat";
 import { PixiApp } from "../Pixi/PixiApp";
+import { useSocketContext } from "./SocketContext";
+import { useWebRTCContext } from "./WebRTCContext";
 
 export function RoomContent() {
 
+    const { socketRef, hostId } = useSocketContext();
     const { streamRef } = useLocalStreamContext();
+    const { dataChannels } = useWebRTCContext()
 
     const PixiAppRef = useRef<PixiApp | null>(null);
     const canvasContainer = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        if (canvasContainer.current) {
-            const newPixiApp = new PixiApp(canvasContainer.current);
+        if (canvasContainer.current && socketRef?.current && dataChannels) {
+            const newPixiApp = new PixiApp(canvasContainer.current, socketRef.current.id, hostId, dataChannels.current);
 
             PixiAppRef.current = newPixiApp;
         }
@@ -26,7 +30,7 @@ export function RoomContent() {
             }
         }
 
-    }, []);
+    }, [dataChannels, hostId, socketRef]);
 
     return (
         <div className="w-full h-full">

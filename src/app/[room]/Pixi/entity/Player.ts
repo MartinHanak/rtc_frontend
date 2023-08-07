@@ -8,6 +8,10 @@ export class Player extends Entity {
     // player input for the current frame
     private currentPlayerCommand: Command;
 
+    get command() {
+        return this.currentPlayerCommand.toArrayBuffer();
+    }
+
     constructor(id: string, name: string, sprite: Sprite) {
         super(id,name,sprite);
         this.currentPlayerCommand = new Command(0,0,0,0,0,false,false);
@@ -17,6 +21,7 @@ export class Player extends Entity {
     public updateCurrentCommandFromArrayBuffer(commandBuffer: ArrayBuffer) {
         // read data from array buffer
         // update currentPlayerCommand
+        this.currentPlayerCommand.updateFromArrayBuffer(commandBuffer);
     }
 
     // method used mainly on the client side

@@ -15,6 +15,8 @@ export class Messenger {
     private dataChannels: Record<string, RTCDataChannel>
 
     constructor(localId: string, hostId: string, dataChannels: dataChannelInput[]) {
+
+        console.log(`Creating Messenger with ${dataChannels.length} connections`);
         this.localId = localId;
         this.hostId = hostId;
 

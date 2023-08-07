@@ -49,9 +49,11 @@ export class PlayingState extends State {
             
         })
 
+        // configure messenger
+        this.context.appWrapper.startMessenger()
+
         // test game
         const game = this.context.appWrapper.initializeGame();
-
 
         const frame = game.getCurrentFrame();
         this.context.app.stage.addChild(frame);
@@ -67,6 +69,16 @@ export class PlayingState extends State {
             // update game current command
             this.context.appWrapper.localInput.updatePlayerCommandFromLocalInput(localPlayer, game.time);
 
+            
+            const commandForCurrentFrame = localPlayer.command;
+            // send current command to the server
+            this.context.appWrapper.messenger.sendCommand(
+                commandForCurrentFrame
+            )
+
+            // LATER: save command to local command buffer
+
+            // apply command to update player state
             localPlayer.applyCurrentCommand();
 
             // update game state (client-side prediction)

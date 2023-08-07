@@ -7,6 +7,8 @@ import { Npc } from "./entity/Npc";
 import { Map, pointInput } from "./object/Map";
 import { Game } from "./game/Game";
 import { InputListener } from "./game/InputListener";
+import { Messenger } from "./game/Messenger";
+import { dataChannelWithSocketId } from "../components/WebRTCContext";
 
 type playerInput = {
     id: string,
@@ -25,9 +27,10 @@ export class PixiApp {
     public hostId: string;
 
     public localInput: InputListener;
-    public playerInput: playerInput[];
+    public dataChannels: dataChannelWithSocketId[]
+    public messenger: Messenger;
 
-    constructor(parentContainer: HTMLDivElement, players: playerInput[], localId: string, hostId: string) {
+    constructor(parentContainer: HTMLDivElement, localId: string, hostId: string, dataChannels: dataChannelWithSocketId[]) {
         console.log(`Initializing PixiApp`);
 
         this.parentContainer = parentContainer;
@@ -35,8 +38,8 @@ export class PixiApp {
         // start listening for user inputs
         this.localInput = new InputListener();
         this.localInput.start();
-
-        this.playerInput = players;
+        
+        this.dataChannels = dataChannels;
         this.localId = localId;
         this.hostId = hostId;
 
@@ -90,8 +93,18 @@ export class PixiApp {
         return { width, height }
     }
 
+    public startMessenger() {
+        // create messenger for sending data to/listening for data from the server
+        
+        this.messenger = new Messenger(this.localId, this.hostId, this.dataChannels.map((channel) => {
+            return {id: channel.fromSocketId, dataChannel: channel.dataChannel}
+        }));
+    }
+
     // used for local AND server game initialization
     public initializeGame() {
+
+
         // if host: start server game + start server
         const testTexture = Texture.from("https://pixijs.io/pixi-react/img/bunny.png");
         const testId = 'testId';
