@@ -4,6 +4,7 @@ import { State } from "./State";
 import { Text, Sprite } from "pixi.js";
 import { appendFile } from "fs";
 import { Player } from "../entity/Player";
+import { Server } from "../game/Server";
 
 export class PlayingState extends State {
     public handleRender() {
@@ -49,11 +50,25 @@ export class PlayingState extends State {
             
         })
 
-        // configure messenger
+        // configure messenger - reads data from react context Ref
         this.context.appWrapper.startMessenger()
+        //dsthis.context.appWrapper.messenger.listenForGameState()
+
 
         // test game
         const game = this.context.appWrapper.initializeGame();
+
+        // server
+
+        if(this.context.appWrapper.localId === this.context.appWrapper.hostId) {
+            // server initilizes its own instance of the same game
+            const server = new Server(
+                this.context.appWrapper.initializeGame(),
+                this.context.appWrapper.messenger
+            );
+
+           server.start();
+        }
 
         const frame = game.getCurrentFrame();
         this.context.app.stage.addChild(frame);
@@ -72,6 +87,7 @@ export class PlayingState extends State {
             
             const commandForCurrentFrame = localPlayer.command;
             // send current command to the server
+
             this.context.appWrapper.messenger.sendCommand(
                 commandForCurrentFrame
             )

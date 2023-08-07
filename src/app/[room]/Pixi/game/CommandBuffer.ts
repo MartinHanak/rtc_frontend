@@ -1,5 +1,8 @@
 // buffer for user commands
 // slightly different for server / client
+
+import { Command } from "./Command";
+
 // server has one-buffer for each user
 export class CommandBuffer {
 
@@ -14,6 +17,9 @@ export class CommandBuffer {
     constructor() {
         this.bufferLength = 0
         this.lastInsertedTime = 0;
+
+        let initialCommand = new Command(0,0,0,0,0,false,false);
+        this.insertCommand(0, initialCommand.toArrayBuffer());
     }
 
     public insertCommand(time: number, command: ArrayBuffer) {
