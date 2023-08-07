@@ -1,3 +1,4 @@
+import { Player } from "../entity/Player";
 import { CommandBuffer } from "./CommandBuffer";
 import { Game } from "./Game";
 import { Messenger } from "./Messenger";
@@ -24,6 +25,8 @@ export class Server {
     private playerCommands: Record<string, CommandBuffer>;
     private messenger: Messenger;
 
+    private currentTickCommands: Record< string, (ArrayBuffer|null)[] >
+
     constructor(game: Game, messenger: Messenger) {
         this.currentGame = game;
         this.messenger = messenger;
@@ -32,6 +35,11 @@ export class Server {
         this.playerCommands = {};
         for(const playerId of this.playerIds) {
            this.playerCommands[playerId] = new CommandBuffer();
+        }
+
+        this.currentTickCommands = {}
+        for(const playerId of this.playerIds) {
+            this.currentTickCommands[playerId] = [];
         }
     }
 
@@ -59,18 +67,53 @@ export class Server {
             
             if(startGameProgress) {
 
-                console.log(`All players sent enough commands for one server tick`);
+                // read command buffers
+                // split commands into steps for all players
+                this.updateCurrentTickCommands(
+                    this.currentGame.time,
+                    this.currentGame.time + this.msPerTick,
+                    this.stepsInOneTick
+                )
 
                 for(let step = 0; step < this.stepsInOneTick; step++) {
                     // apply commands to current game (and current time window)
-                    // remove them from buffer
+                    for(const playerId in this.currentTickCommands) {
+                        // if no command = no update (uses previous player command instead)
+                        let command = this.currentTickCommands[playerId][step];
+                        if(command) {
+                            let player = this.currentGame.getEntity(playerId)
+                            if(player instanceof Player) {
+                                player.updateCurrentCommandFromArrayBuffer(command);
+                                player.applyCurrentCommand();
+                            } else {
+                                console.log(`No player with id ${playerId} found.`);
+                            }
+                        } else {
+                            console.log(`No command found for current step.`);
+                        }
+                    }
                     // progress game given the commands
-                    // save a new game state (with updated simulation time) 
+                    this.currentGame.progressGameState(this.msPerStep);
+                    // LATER: save a new game state (with updated simulation time) 
                 }
+                // remove them from buffer
+                this.forgetCommandsUntil(this.currentGame.time);
                 // send new game state to all participants
-                //          this.messenger.sendGameState(gameState as ArrayBuffer)
+                this.messenger.sendGameState(this.currentGame.toArrayBuffer());
             }
         }, this.msPerTick)
+    }
+
+    private forgetCommandsUntil(time: number) {
+        for(const playerId in this.playerCommands) {
+            this.playerCommands[playerId].removeCommandsUpto(time);
+        }
+    }
+
+    private updateCurrentTickCommands(startTime: number, endTime: number, steps: number) {
+        for(const playerId in this.currentTickCommands) {
+            this.currentTickCommands[playerId] = this.playerCommands[playerId].getCommandsWithinWindow(startTime,endTime,steps)
+        }
     }
 
     public stop() {

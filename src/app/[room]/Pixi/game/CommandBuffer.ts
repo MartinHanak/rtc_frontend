@@ -34,6 +34,52 @@ export class CommandBuffer {
         this.lastInsertedTime = time;
     }
 
+    // find commands from startTime to endTime
+    // split them into 'steps' time windows
+    // null if no found
+    // if multiple: take 1st command found
+    public getCommandsWithinWindow(startTime: number, endTime: number, steps: number) {
+
+        let commands : (ArrayBuffer | null)[] = [];
+
+        for(let i = 0; i < steps; i++) {
+            commands[i] = null;
+        }
+        
+        const timePerStep = Math.floor((endTime - startTime) / steps );
+
+        let currentNode = this.head;
+        let start = startTime;
+        let end = startTime + timePerStep;
+        let index = 0;
+
+        while(currentNode && currentNode.time <= endTime && index < steps) {
+            
+            if(currentNode.time < start) {
+                // skip all commands from time before start
+                currentNode = currentNode.next;
+                continue;
+            } else if(currentNode.time >= end) {
+                // no command for window start-end
+                commands[index] = null;
+                index += 1;
+                start += timePerStep;
+                end += timePerStep;
+                currentNode = currentNode.next;
+            } else {
+                // command found for start-end
+                // take the 1st one found
+                commands[index] = currentNode.command
+                index += 1;
+                start += timePerStep;
+                end += timePerStep;
+                currentNode = currentNode.next;
+            }
+        }
+
+        return commands;
+    }
+
     // remove all commands up to the specified time
     public removeCommandsUpto(time: number) {
         if(this.head) {

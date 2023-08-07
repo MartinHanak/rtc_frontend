@@ -5,6 +5,7 @@ import { Text, Sprite } from "pixi.js";
 import { appendFile } from "fs";
 import { Player } from "../entity/Player";
 import { Server } from "../game/Server";
+import { Command } from "../game/Command";
 
 export class PlayingState extends State {
 
@@ -55,16 +56,13 @@ export class PlayingState extends State {
 
         // configure messenger - reads data from react context Ref
         this.context.appWrapper.startMessenger()
-        //dsthis.context.appWrapper.messenger.listenForGameState()
 
-
-        // test game
+        // game
         const game = this.context.appWrapper.initializeGame();
 
         // server
-
         if(this.context.appWrapper.localId === this.context.appWrapper.hostId) {
-            // server initilizes its own instance of the same game
+            // server initializes its own instance of the same game
             this.server = new Server(
                 this.context.appWrapper.initializeGame(),
                 this.context.appWrapper.messenger
@@ -79,7 +77,19 @@ export class PlayingState extends State {
         const localPlayerId = 'testId'; //this.context.appWrapper.localId;
         const localPlayer = game.getEntity(localPlayerId) as Player;
 
+        // sync server-client: 
+        // server ready when 1st game state received from the server
+        // send empty commands until then
+        let serverReady = false;
+        const emptyCommand = new Command(0,0,0,0,0,false,false).toArrayBuffer();
+
         this.context.app.ticker.add((delta) => {
+            if(!serverReady) {
+                this.context.appWrapper.messenger.sendCommand(emptyCommand);
+                return;
+            }
+            console.log(`Server is ready`);
+
             // read user input (multiple inputs combined into one command)
 
             // test = static command TEMPORARY
