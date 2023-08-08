@@ -71,6 +71,9 @@ export class PlayingState extends State {
            this.server.start();
         }
 
+        // client-side: start listening for game states from the server
+        this.context.appWrapper.messenger.listenForGameState(game.serverStateBuffer);
+
         const frame = game.getCurrentFrame();
         this.context.app.stage.addChild(frame);
 
@@ -80,15 +83,23 @@ export class PlayingState extends State {
         // sync server-client: 
         // server ready when 1st game state received from the server
         // send empty commands until then
-        let serverReady = false;
+        let firstGameStateReceived = false;
         const emptyCommand = new Command(0,0,0,0,0,false,false).toArrayBuffer();
 
         this.context.app.ticker.add((delta) => {
-            if(!serverReady) {
-                this.context.appWrapper.messenger.sendCommand(emptyCommand);
-                return;
+            // sync game start with the server
+            // wait for 1st game state before progressing the game
+            // send empty commands until then
+            if(!firstGameStateReceived) {
+                if(game.serverStateBuffer.bufferLength > 0) {
+                    console.log(`Server is ready. First game state was received`);
+                    firstGameStateReceived = true;
+                } else {
+                    this.context.appWrapper.messenger.sendCommand(emptyCommand);
+                    return;
+                }
             }
-            console.log(`Server is ready`);
+            
 
             // read user input (multiple inputs combined into one command)
             // update game current command
@@ -109,9 +120,6 @@ export class PlayingState extends State {
             // update game state (client-side prediction)
             // later: add server-check (server reconsiliation)
             game.progressGameState(delta);
-
-
-            // send command to server
 
         
         })

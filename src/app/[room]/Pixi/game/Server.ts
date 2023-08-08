@@ -50,22 +50,40 @@ export class Server {
 
 
         // move interval to worker if not accurate enough
+        let firstGameStateSent = false;
         let startGameProgress = false;
         this.intervalId = window.setInterval(() => {
-            // once all players send enough commands for one server tick:
-            // start the first tick and loop
-            if(!startGameProgress) {
-                startGameProgress = true
+
+            // send first game state after receiving enough (empty) commands from all players
+            if(!firstGameStateSent) {
+
+                firstGameStateSent = true;
                 for(const playerId in this.playerCommands) {
                     if(this.playerCommands[playerId].bufferLength < 10) {
+                        firstGameStateSent = false;
+                        break;
+                    }
+                }
+                if(firstGameStateSent) {
+                    // send the first game state = initial game state, time 0
+                    this.messenger.sendGameState(this.currentGame.toArrayBuffer())
+                }
+            } else if (firstGameStateSent && !startGameProgress) {
+                // wait for commands from all players for the first server tick
+                // only then start the game progress from 0
+                startGameProgress = true;
+                for(const playerId in this.playerCommands) {
+                    if(!this.playerCommands[playerId].lastInsertedTime) {
+                        startGameProgress = false;
+                        break;
+                    } else if (this.playerCommands[playerId].lastInsertedTime! < this.msPerTick) {
                         startGameProgress = false;
                         break;
                     }
                 }
             }
-            
-            
-            if(startGameProgress) {
+
+            if(startGameProgress && firstGameStateSent) {
 
                 // read command buffers
                 // split commands into steps for all players
@@ -100,20 +118,28 @@ export class Server {
                 this.forgetCommandsUntil(this.currentGame.time);
                 // send new game state to all participants
                 this.messenger.sendGameState(this.currentGame.toArrayBuffer());
+            } else if( !startGameProgress && firstGameStateSent ) {
+                // send game state without progressing the game
+                // UDP connection: 1st game state might not have arrived
+                this.messenger.sendGameState(this.currentGame.toArrayBuffer());
             }
         }, this.msPerTick)
     }
 
     private forgetCommandsUntil(time: number) {
+
         for(const playerId in this.playerCommands) {
             this.playerCommands[playerId].removeValuesUpto(time);
         }
+
     }
 
     private updateCurrentTickCommands(startTime: number, endTime: number, steps: number) {
+
         for(const playerId in this.currentTickCommands) {
             this.currentTickCommands[playerId] = this.playerCommands[playerId].getValuesWithinWindow(startTime,endTime,steps)
         }
+
     }
 
     public stop() {

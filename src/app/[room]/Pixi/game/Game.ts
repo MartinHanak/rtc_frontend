@@ -21,9 +21,9 @@ export class Game {
 
     private map; // background + boundaries + static assets
 
-    private serverStateBuffer : ArrayBufferBuffer;
-   // private localStateBuffer : GameStateBuffer;
-    private localCommandsBuffer : ArrayBufferBuffer;
+    public serverStateBuffer : ArrayBufferBuffer;
+    // private localStateBuffer : GameStateBuffer;
+    public localCommandsBuffer : ArrayBufferBuffer;
 
     constructor(map: Map, players: Player[], npcs: Npc[]) {
         this.map = map;
@@ -134,13 +134,18 @@ export class Game {
     }
 
     get entityArrayBufferLength() {
-        return this.entities[0].arrayBufferByteLength
+        let length = -1;
+        for(let entityId in this.entities) {
+            length = this.entities[entityId].arrayBufferByteLength;
+            break;
+        }
+        return length;
     }
 
     get arrayBufferLength() {
         // arrayBufferByteLength * number of entities
-        // + 1 for simulation time
-        return 1 + this.entitiesNumber * this.entityArrayBufferLength;
+        // + 1 number = 8 bytes for simulation time
+        return 8 + this.entitiesNumber * this.entityArrayBufferLength;
     }
 
     // convert game state for network transmission
@@ -150,11 +155,15 @@ export class Game {
 
         bufferView[0] = this.simulationTime;
 
-        for(let i = 0; i < this.entitiesNumber; i++) {
+        let index = 0;
+        for(const entityId in this.entities) {
+            // offset for Float64Array set method is in number indexes, not bytes
+            // offset for 1st number + (number of entities) * (numbers for one entity)
             bufferView.set(
-                this.entities[i].toBufferView()
-                , 1 + i * this.entityArrayBufferLength
-            );
+                this.entities[entityId].toBufferView(),
+                Math.floor((8 + index * this.entities[entityId].arrayBufferByteLength) / 8)
+            )
+            index += 1;
         }
 
         return buffer;
@@ -169,13 +178,13 @@ export class Game {
 
         this.simulationTime = bufferView[0];
 
-        for(let i = 0; i < this.entitiesNumber; i++) {
-
-            this.entities[i].updateFromArrayBuffer(
-                buffer.slice(1 + i * this.entityArrayBufferLength, 1 + (i + 1) * this.entityArrayBufferLength)
+        let index = 0;
+        for(const entityId in this.entities) {
+            this.entities[entityId].updateFromArrayBuffer(
+                buffer.slice(8 + index * this.entityArrayBufferLength,8 + (index + 1) * this.entityArrayBufferLength)
             )
 
+            index += 1;
         }
-
     }
 }
