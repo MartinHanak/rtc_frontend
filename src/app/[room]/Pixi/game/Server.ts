@@ -1,7 +1,7 @@
 import { Player } from "../entity/Player";
-import { CommandBuffer } from "./CommandBuffer";
 import { Game } from "./Game";
 import { Messenger } from "./Messenger";
+import { ArrayBufferBuffer } from "./ArrayBufferBuffer";
 
 // updates old game state given user inputs
 export class Server {
@@ -22,7 +22,7 @@ export class Server {
 
     private currentGame: Game;
     private playerIds: string[];
-    private playerCommands: Record<string, CommandBuffer>;
+    private playerCommands: Record<string, ArrayBufferBuffer>;
     private messenger: Messenger;
 
     private currentTickCommands: Record< string, (ArrayBuffer|null)[] >
@@ -34,7 +34,7 @@ export class Server {
         this.playerIds = this.messenger.playerIds;
         this.playerCommands = {};
         for(const playerId of this.playerIds) {
-           this.playerCommands[playerId] = new CommandBuffer();
+           this.playerCommands[playerId] = new ArrayBufferBuffer();
         }
 
         this.currentTickCommands = {}
@@ -106,13 +106,13 @@ export class Server {
 
     private forgetCommandsUntil(time: number) {
         for(const playerId in this.playerCommands) {
-            this.playerCommands[playerId].removeCommandsUpto(time);
+            this.playerCommands[playerId].removeValuesUpto(time);
         }
     }
 
     private updateCurrentTickCommands(startTime: number, endTime: number, steps: number) {
         for(const playerId in this.currentTickCommands) {
-            this.currentTickCommands[playerId] = this.playerCommands[playerId].getCommandsWithinWindow(startTime,endTime,steps)
+            this.currentTickCommands[playerId] = this.playerCommands[playerId].getValuesWithinWindow(startTime,endTime,steps)
         }
     }
 

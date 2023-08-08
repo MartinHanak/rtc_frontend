@@ -6,8 +6,7 @@ import { Npc } from "../entity/Npc";
 import { Player } from "../entity/Player";
 import { Map } from "../object/Map";
 import { Entity } from "../entity/Entity";
-import { GameStateBuffer } from "./GameStateBuffer";
-import { CommandBuffer } from "./CommandBuffer";
+import { ArrayBufferBuffer } from "./ArrayBufferBuffer";
 
 // Server is authoritative, Game has to make corrections if client and server disagree
 export class Game {
@@ -22,9 +21,9 @@ export class Game {
 
     private map; // background + boundaries + static assets
 
-    private serverStateBuffer : GameStateBuffer;
+    private serverStateBuffer : ArrayBufferBuffer;
    // private localStateBuffer : GameStateBuffer;
-    private localCommandsBuffer : CommandBuffer;
+    private localCommandsBuffer : ArrayBufferBuffer;
 
     constructor(map: Map, players: Player[], npcs: Npc[]) {
         this.map = map;
@@ -40,7 +39,8 @@ export class Game {
         this.simulationTime = 0;
         this.initializeEntityPositions();
 
-        this.localCommandsBuffer = new CommandBuffer();
+        this.localCommandsBuffer = new ArrayBufferBuffer();
+        this.serverStateBuffer = new ArrayBufferBuffer();
     }
 
     // set players on one big circle around the center of the map

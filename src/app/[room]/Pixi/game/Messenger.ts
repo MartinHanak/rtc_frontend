@@ -1,7 +1,6 @@
 // abstract sending / receiving messages through WebRTC
 
-import { CommandBuffer } from "./CommandBuffer";
-import { GameStateBuffer } from "./GameStateBuffer";
+import { ArrayBufferBuffer } from "./ArrayBufferBuffer";
 
 export type dataChannelInput = {
     id: string,
@@ -72,7 +71,7 @@ export class Messenger {
     }
 
     // for now: only host listens for commands from all 
-    public listenForCommands(playerBuffers: Record<string, CommandBuffer>) {
+    public listenForCommands(playerBuffers: Record<string, ArrayBufferBuffer>) {
         // playerBuffers include hostId too
         for(const playerId in playerBuffers) {
 
@@ -98,7 +97,7 @@ export class Messenger {
         }
     }
 
-    private insertCommand(command: ArrayBuffer | null, buffer: CommandBuffer) {
+    private insertCommand(command: ArrayBuffer | null, buffer: ArrayBufferBuffer) {
         if(!command) {
             throw new Error(`Inserted command is not a valid ArrayBuffer: ${command}`)
         }
@@ -106,7 +105,7 @@ export class Messenger {
         // read command time
         let time = this.readArrayBufferTime(command);
 
-        buffer.insertCommand(time, command);
+        buffer.insert(time, command);
     }
 
     // assume float 64, 1st number = time
@@ -123,13 +122,13 @@ export class Messenger {
     }
 
     // each client runs their own version with their own buffer
-    public listenForGameState(buffer: GameStateBuffer) {
+    public listenForGameState(buffer: ArrayBufferBuffer) {
         // host
         if(this.localId === this.hostId) {
 
             window.addEventListener("hostGameState", (event) => {
                 let time = this.readArrayBufferTime(event.detail);
-                buffer.insertGameState(time,event.detail);
+                buffer.insert(time,event.detail);
             })
 
         } else {
@@ -140,7 +139,7 @@ export class Messenger {
                 this.dataChannels[playerId].addEventListener('message', (event: MessageEvent<ArrayBuffer>) => {
 
                     let time = this.readArrayBufferTime(event.data);
-                    buffer.insertGameState(time,event.data);
+                    buffer.insert(time,event.data);
 
                 })
 

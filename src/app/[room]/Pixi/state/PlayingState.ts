@@ -91,13 +91,9 @@ export class PlayingState extends State {
             console.log(`Server is ready`);
 
             // read user input (multiple inputs combined into one command)
-
-            // test = static command TEMPORARY
-
             // update game current command
             this.context.appWrapper.localInput.updatePlayerCommandFromLocalInput(localPlayer, game.time);
 
-            
             const commandForCurrentFrame = localPlayer.command;
             // send current command to the server
 
