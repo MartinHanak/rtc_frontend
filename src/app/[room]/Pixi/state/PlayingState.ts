@@ -77,7 +77,7 @@ export class PlayingState extends State {
         const frame = game.getCurrentFrame();
         this.context.app.stage.addChild(frame);
 
-        const localPlayerId = 'testId'; //this.context.appWrapper.localId;
+        const localPlayerId = this.context.appWrapper.localId;
         const localPlayer = game.getEntity(localPlayerId) as Player;
 
         // sync server-client: 

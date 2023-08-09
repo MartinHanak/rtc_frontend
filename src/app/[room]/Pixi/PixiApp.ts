@@ -10,10 +10,9 @@ import { InputListener } from "./game/InputListener";
 import { Messenger } from "./game/Messenger";
 import { dataChannelWithSocketId } from "../components/WebRTCContext";
 
-type playerInput = {
+type nameInput = {
     id: string,
-    name: string,
-    dataChannel: RTCDataChannel
+    name: string
 }
 
 
@@ -27,10 +26,13 @@ export class PixiApp {
     public hostId: string;
 
     public localInput: InputListener;
-    public dataChannels: dataChannelWithSocketId[]
+    public dataChannels: dataChannelWithSocketId[];
     public messenger: Messenger;
+    // match player Id to player name
+    private playerNamesInput: nameInput[];
+    public playerNames: Record<string, string>; 
 
-    constructor(parentContainer: HTMLDivElement, localId: string, hostId: string, dataChannels: dataChannelWithSocketId[]) {
+    constructor(parentContainer: HTMLDivElement, localId: string, hostId: string, dataChannels: dataChannelWithSocketId[],nameInput?:nameInput[]) {
         console.log(`Initializing PixiApp`);
 
         this.parentContainer = parentContainer;
@@ -42,6 +44,16 @@ export class PixiApp {
         this.dataChannels = dataChannels;
         this.localId = localId;
         this.hostId = hostId;
+
+        // player names match their id
+        this.playerNames = {}
+        if(nameInput) {
+            for(const input of nameInput) {
+                this.playerNames[input.id] = input.name;
+            }
+        }
+
+
 
         this.application = new Application<HTMLCanvasElement>({
             backgroundColor: 0x3495ed,
@@ -104,13 +116,27 @@ export class PixiApp {
     // used for local AND server game initialization
     public initializeGame() {
 
-
         // if host: start server game + start server
         const testTexture = Texture.from("https://pixijs.io/pixi-react/img/bunny.png");
-        const testId = 'testId';
-        const testName = 'MyName';
 
-        const testPlayer = new Player(testId, testName, new Sprite(testTexture));
+        const players = [];
+        console.log('Initilizing the game')
+        for(const channel of this.dataChannels) {
+            let id = channel.fromSocketId;
+            let name = channel.fromSocketId;
+            console.log(id)
+
+            if (id in this.playerNames) {
+                name = this.playerNames[id]
+            }
+
+            const player = new Player(id, name, new Sprite(testTexture));
+
+            players.push(player)
+
+        }
+        const localPlayer = new Player(this.localId, this.localId, new Sprite(testTexture))
+        players.push(localPlayer);
 
         const testNpc1 = new Npc('npc1','npc1',new Sprite(testTexture));
         const testNpc2 = new Npc('npc2','npc2',new Sprite(testTexture));
@@ -118,7 +144,7 @@ export class PixiApp {
         const mapBoundaryPoints : pointInput[] = [[100,100],[100,900],[900,900],[900,100]];
         const testMap = new Map(mapBoundaryPoints, new Sprite(testTexture));
 
-        const testGame = new Game(testMap,[testPlayer],[testNpc1, testNpc2]);
+        const testGame = new Game(testMap,players,[testNpc1, testNpc2]);
         console.log(`New game created`)
         console.log(testGame);
         return testGame;

@@ -28,6 +28,10 @@ export class Game {
     constructor(map: Map, players: Player[], npcs: Npc[]) {
         this.map = map;
 
+        // sort input players 
+        // so that order does not matter
+        players.sort((a,b) => {return a.id > b.id ? 1 : -1})
+
         this.entities = {};
         players.forEach((player) => {
             this.entities[player.id] = player;
