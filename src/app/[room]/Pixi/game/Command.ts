@@ -9,8 +9,16 @@ export class Command {
 
     // exact client-side simulation time
     private simulationTime: number
+
+    get time() {
+        return this.simulationTime;
+    }
     // direction when command created
     private playerDirection: Point;
+
+    get direction() {
+        return this.playerDirection;
+    }
     // velocity = combination of all user inputs (pushback not included)
     private intendedVelocity: Point;
 
@@ -21,6 +29,10 @@ export class Command {
     // whether or not buttons were pressed for different status effects 
     // only attack/block (pushback is result of other players actions)
     private statusActions: {[type in StatusEffectType] : boolean } 
+
+    get status() {
+        return this.statusActions
+    }
 
     constructor(time: number, dir_x: number, dir_y: number, vel_x: number, vel_y: number, attack: boolean, block: boolean) {
         this.simulationTime = time;
