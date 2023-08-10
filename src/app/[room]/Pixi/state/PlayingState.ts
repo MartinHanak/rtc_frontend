@@ -86,7 +86,9 @@ export class PlayingState extends State {
         let firstGameStateReceived = false;
         const emptyCommand = new Command(0,0,0,0,0,false,false).toArrayBuffer();
 
-        this.context.app.ticker.add((delta) => {
+        this.context.app.ticker.add(() => {
+            // time from last frame to this frame in ms
+            let delta = this.context.app.ticker.deltaMS;
             // sync game start with the server
             // wait for 1st game state before progressing the game
             // send empty commands until then

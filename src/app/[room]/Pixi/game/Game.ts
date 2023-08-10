@@ -29,7 +29,7 @@ export class Game {
         this.map = map;
 
         // sort input players 
-        // so that order does not matter
+        // so that input order does not matter
         players.sort((a,b) => {return a.id > b.id ? 1 : -1})
 
         this.entities = {};

@@ -103,7 +103,8 @@ export class Messenger {
         }
 
         // read command time
-        let time = this.readArrayBufferTime(command);
+        let time = Math.floor(this.readArrayBufferTime(command));
+        console.log(`Received command for time ${time}`);
 
         buffer.insert(time, command);
     }
@@ -127,7 +128,7 @@ export class Messenger {
         if(this.localId === this.hostId) {
 
             window.addEventListener("hostGameState", (event) => {
-                let time = this.readArrayBufferTime(event.detail);
+                let time = Math.floor(this.readArrayBufferTime(event.detail));
                 buffer.insert(time,event.detail);
             })
 

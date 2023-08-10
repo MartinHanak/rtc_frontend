@@ -52,6 +52,9 @@ export class Server {
         // move interval to worker if not accurate enough
         let firstGameStateSent = false;
         let startGameProgress = false;
+
+        const initialServerDelay = this.msPerTick;
+
         this.intervalId = window.setInterval(() => {
 
             // send first game state after receiving enough (empty) commands from all players
@@ -76,7 +79,7 @@ export class Server {
                     if(!this.playerCommands[playerId].lastInsertedTime) {
                         startGameProgress = false;
                         break;
-                    } else if (this.playerCommands[playerId].lastInsertedTime! < this.msPerTick) {
+                    } else if (this.playerCommands[playerId].lastInsertedTime! < initialServerDelay) {
                         startGameProgress = false;
                         break;
                     }
@@ -92,6 +95,11 @@ export class Server {
                     this.currentGame.time + this.msPerTick,
                     this.stepsInOneTick
                 )
+                // test
+                console.log(`Server time: ${this.currentGame.time}`);
+                for(const playerId in this.currentTickCommands) {
+                    console.log(this.currentTickCommands[playerId])
+                }
 
                 for(let step = 0; step < this.stepsInOneTick; step++) {
                     // apply commands to current game (and current time window)
@@ -99,6 +107,7 @@ export class Server {
                         // if no command = no update (uses previous player command instead)
                         let command = this.currentTickCommands[playerId][step];
                         if(command) {
+                            console.log(`Command found for current step.`)
                             let player = this.currentGame.getEntity(playerId)
                             if(player instanceof Player) {
                                 player.updateCurrentCommandFromArrayBuffer(command);
