@@ -43,7 +43,7 @@ export class PlayingState extends State {
 
         this.context.app.stage.addChild(test);
         
-        this.context.app.ticker.add((delta) => {
+        this.context.app.ticker.add(() => {
             // display texture for current app state
 
             // update game state if playing
@@ -86,9 +86,14 @@ export class PlayingState extends State {
         let firstGameStateReceived = false;
         const emptyCommand = new Command(0,0,0,0,0,false,false).toArrayBuffer();
 
+        let previousRenderTime = Date.now();
+
         this.context.app.ticker.add(() => {
             // time from last frame to this frame in ms
-            let delta = this.context.app.ticker.deltaMS;
+            let newTime = Date.now();
+            let delta = newTime - previousRenderTime;
+            previousRenderTime = newTime;
+            
             // sync game start with the server
             // wait for 1st game state before progressing the game
             // send empty commands until then
@@ -123,7 +128,6 @@ export class PlayingState extends State {
             // later: add server-check (server reconsiliation)
             game.progressGameState(delta);
 
-        
         })
 
     }

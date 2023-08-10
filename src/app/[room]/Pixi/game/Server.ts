@@ -15,9 +15,7 @@ export class Server {
     get stepsInOneTick() {
         return Math.max(1, Math.round(60 / this.tickRate));
     }
-    get msPerStep() {
-        return Math.floor(this.msPerTick / this.stepsInOneTick);
-    }
+
     private intervalId : number;
 
     private currentGame: Game;
@@ -52,10 +50,16 @@ export class Server {
         // move interval to worker if not accurate enough
         let firstGameStateSent = false;
         let startGameProgress = false;
+        let previousIntervalTime = Date.now();
 
         const initialServerDelay = this.msPerTick;
 
         this.intervalId = window.setInterval(() => {
+
+            let newTime = Date.now();
+            let tickTime = newTime - previousIntervalTime;
+            let stepTime = tickTime / this.stepsInOneTick;
+            previousIntervalTime = newTime;
 
             // send first game state after receiving enough (empty) commands from all players
             if(!firstGameStateSent) {
@@ -92,7 +96,7 @@ export class Server {
                 // split commands into steps for all players
                 this.updateCurrentTickCommands(
                     this.currentGame.time,
-                    this.currentGame.time + this.msPerTick,
+                    this.currentGame.time + tickTime,
                     this.stepsInOneTick
                 )
                 // test
@@ -120,7 +124,7 @@ export class Server {
                         }
                     }
                     // progress game given the commands
-                    this.currentGame.progressGameState(this.msPerStep);
+                    this.currentGame.progressGameState(stepTime);
                     // LATER: save a new game state (with updated simulation time) 
                 }
                 // remove them from buffer
@@ -132,6 +136,7 @@ export class Server {
                 // UDP connection: 1st game state might not have arrived
                 this.messenger.sendGameState(this.currentGame.toArrayBuffer());
             }
+
         }, this.msPerTick)
     }
 
