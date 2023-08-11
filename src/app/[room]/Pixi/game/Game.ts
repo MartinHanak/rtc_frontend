@@ -110,6 +110,20 @@ export class Game {
 
     } 
 
+    // client-side only function
+    // use server state buffer to interpolate non-local entities
+    // updates their values from 2 buffered values (interpolated)
+    // that is: non-local entities are shown in the past
+    // for now assume delayTime will be constant during the whole game
+    public interpolateNonLocalEntities(delayTime: number) {
+
+        // get LAST TWO BUFFERS
+
+        // check if 2 buffers exist AND their times are within range
+
+        // interpolate each entity using these 2 buffers
+    }
+
     // assume that current Game values = values for the render frame
     public getCurrentFrame() : Container {
         console.log('Current frame');

@@ -11,7 +11,7 @@ export abstract class Entity {
     private currentSpriteContainer: Container;
 
     private _position: Point = new Point(0, 0);
-    private _speed: number = 20;
+    private _speed: number = 20 / 1000; // units = pixel per ms
     private _pushBackSpeed: number = 40;
     private _velocity: Point = new Point(0, 0); // does not include push-back from others
 
@@ -175,6 +175,20 @@ export abstract class Entity {
 
     // update Entity from arraybuffer
     public updateFromArrayBuffer(buffer: ArrayBuffer) {
+
+        const extractedValues = this.extractValuesFromArrayBuffer(buffer);
+
+        this.position = [...extractedValues.position];
+        this.velocity = [...extractedValues.velocity];
+
+        Object.values(StatusEffectType).forEach((type, index) => {
+            this._statusEffects[type].startTime = extractedValues.statusEffects[type].startTime;
+            this._statusEffects[type].duration = extractedValues.statusEffects[type].duration;
+            this._statusEffects[type].direction = [...extractedValues.statusEffects[type].direction];
+        });
+    }
+
+    private extractValuesFromArrayBuffer(buffer: ArrayBuffer) {
         // array buffer has same structure as toBufferView
         if(buffer.byteLength !== this.arrayBufferByteLength) {
             throw new Error(`Update array buffer has different length ${buffer.byteLength} than expected ${this.arrayBufferByteLength}`)
@@ -182,31 +196,41 @@ export abstract class Entity {
 
         const bufferView = new Float64Array(buffer);
 
-        this.position = [ bufferView[0], bufferView[1] ];
-        this.velocity = [ bufferView[2], bufferView[3] ];
+        let result : {
+            position: [number, number],
+            velocity: [number, number],
+            statusEffects : Record<StatusEffectType,{startTime: number, duration: number, type: StatusEffectType, direction: [number,number]}>
+        } =  {
+            position: [bufferView[0], bufferView[1]],
+            velocity: [bufferView[2], bufferView[3]],
+            statusEffects: {} as Record<StatusEffectType,{startTime: number, duration: number, type: StatusEffectType, direction: [number,number]}>
+        }
 
         Object.values( StatusEffectType ).forEach((value: StatusEffectType, index: number) => {
-            // check if status effect has non-zero duration
-            if(bufferView[5 + index * STATUS_EFFECT_LENGTH] && bufferView[5 + index * STATUS_EFFECT_LENGTH] > 0) {
-
-                this._statusEffects[value].startTime = bufferView[4 + index * STATUS_EFFECT_LENGTH];
-                this._statusEffects[value].duration  = bufferView[5 + index * STATUS_EFFECT_LENGTH];
-                // index converted to value
-                this._statusEffects[value].type 
-                = getStringEnumValue(StatusEffectType, bufferView[6 + index * STATUS_EFFECT_LENGTH] );
-
-                this._statusEffects[value].direction = [
+            result.statusEffects[value] = {
+                startTime:  bufferView[4 + index * STATUS_EFFECT_LENGTH],
+                duration:   bufferView[5 + index * STATUS_EFFECT_LENGTH],
+                type: getStringEnumValue(StatusEffectType, bufferView[6 + index * STATUS_EFFECT_LENGTH] ),
+                direction: [
                     bufferView[7 + index * STATUS_EFFECT_LENGTH],
                     bufferView[8 + index * STATUS_EFFECT_LENGTH]
-                ];
-
-            } else {
-                // status effect is empty otherwise = 0 duration
-                this._statusEffects[value].duration = 0;
-                this._statusEffects[value].startTime = 0;
+                ]
             }
         })
 
+        return result;
+    }
+
+    public interpolateFromBuffers(time: number, secondLatest : {time: number, value: ArrayBuffer}, latest:  {time: number, value: ArrayBuffer}){
+
+        // if time > last buffer (including delay): 
+        // extrapolate = same status, constant velocity
+
+        // if time < last buffer:
+        // interpolate = linear position / velocity between two times
+        // status effects: look at both frames, choose one where non-zero duration (if any)
+
+        // apply new values to current entity
 
     }
 }

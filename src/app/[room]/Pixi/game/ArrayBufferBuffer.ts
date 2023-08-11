@@ -4,6 +4,12 @@ export class ArrayBufferBuffer {
     public bufferLength: number;
     public lastInsertedTime: number | null;
 
+    // two latest values (values with highest time)
+    // not removed when list updated
+    // only updated with insert method
+    private latest: ListNode | null;
+    private secondLatest: ListNode | null;
+
     constructor() {
         this.head = null;
         this.tail = null;
@@ -12,16 +18,32 @@ export class ArrayBufferBuffer {
     }
 
     public insert(time: number, value: ArrayBuffer) {
+        let newNode = new ListNode(time,value);
         if(!this.tail ) {
-            this.head = new ListNode(time, value);
+            this.head = newNode;
             this.tail = this.head;
             this.bufferLength = 1;
         } else {
-            this.tail.next = new ListNode(time, value);
+            this.tail.next = newNode;
             this.tail = this.tail.next;
             this.bufferLength += 1;
         }
         this.lastInsertedTime = time;
+
+        // keep track of 2 latest added values
+        if(!this.latest) {
+            this.latest = newNode;
+        }
+        if(!this.secondLatest) {
+            this.secondLatest = newNode;
+        }
+
+        if(time > this.latest.time) {
+            this.secondLatest = this.latest;
+            this.latest = newNode;
+        } else if(time > this.secondLatest.time && time < this.latest.time) {
+            this.secondLatest = newNode;
+        }
     }
 
     // find values from startTime to endTime
@@ -96,6 +118,22 @@ export class ArrayBufferBuffer {
 
             currentNode = nextNodeCopy;
         }
+    }
+
+    public getTwoLatestValues() {
+        if(!this.latest || !this.secondLatest || this.latest.time === this.secondLatest.time) {
+            return null;
+        } else {
+            return [{
+                time: this.secondLatest.time,
+                value: this.secondLatest.value
+            }, {
+                time: this.latest.time,
+                value: this.latest.value
+            }]
+        }
+
+        
     }
 }
 
