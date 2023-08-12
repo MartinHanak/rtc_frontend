@@ -4,7 +4,7 @@
 import { Container, Point, Sprite } from "pixi.js";
 import { Npc } from "../entity/Npc";
 import { Player } from "../entity/Player";
-import { Map } from "../object/Map";
+import { Map as GameMap } from "../object/Map";
 import { Entity } from "../entity/Entity";
 import { ArrayBufferBuffer } from "./ArrayBufferBuffer";
 
@@ -17,27 +17,27 @@ export class Game {
     }
 
     // players and npcs, npcs at the end
-    private entities: Record<string, Entity> ;
+    private entities: Map<string,Entity> ;
 
-    private map; // background + boundaries + static assets
+    private map : GameMap; // background + boundaries + static assets
 
     public serverStateBuffer : ArrayBufferBuffer;
     // private localStateBuffer : GameStateBuffer;
     public localCommandsBuffer : ArrayBufferBuffer;
 
-    constructor(map: Map, players: Player[], npcs: Npc[]) {
+    constructor(map: GameMap, players: Player[], npcs: Npc[]) {
         this.map = map;
 
         // sort input players 
         // so that input order does not matter
         players.sort((a,b) => {return a.id > b.id ? 1 : -1})
 
-        this.entities = {};
+        this.entities = new Map<string,Entity>();
         players.forEach((player) => {
-            this.entities[player.id] = player;
+            this.entities.set(player.id, player);
         })
         npcs.forEach((npc) => {
-            this.entities[npc.id] = npc;
+            this.entities.set(npc.id, npc);
         })
 
         this.simulationTime = 0;
@@ -56,34 +56,36 @@ export class Game {
         const anglePerEntity = 2 *  Math.PI / entitiesNumber;
 
         let i = 0;
-        for(const entityId in this.entities) {
+        this.entities.forEach((entity) => {
             let new_x = radius * Math.cos(anglePerEntity * i) + centerPosition.x;
             let new_y = radius * Math.sin(anglePerEntity * i) + centerPosition.y;
 
-            this.entities[entityId].position = [new_x, new_y];
-
+            entity.position = [new_x, new_y];
             i += 1;
-        }
+        });
     }
 
     get playerIds() {
         const ids : string[] = [];
 
-        for(const entityId in this.entities) {
-            if(this.entities[entityId] instanceof Player) {
-                ids.push(this.entities[entityId].id);
+        this.entities.forEach((entity) => {
+            if(entity instanceof Player) {
+                ids.push(entity.id);
             }
-        }
+        })
 
         return ids;
     }
 
     public getEntity(id: string) {
-        if(!(id in this.entities)) {
-            throw new Error(`Entity with the required id: ${id} not found.`)
+
+        const entity = this.entities.get(id);
+
+        if(!entity) {
+            throw new Error(`Entity with the required id: ${id} not found.`);
         }
 
-        return this.entities[id];
+        return entity;
     }
 
     // given current game state 
@@ -91,9 +93,9 @@ export class Game {
     public progressGameState(time: number) {
         // hit registration
         // movement
-        for(const entityId in this.entities) {
-            this.entities[entityId].move(time);
-        }
+        this.entities.forEach((entity) => {
+            entity.move(time);
+        })
         // other...
         // update time
         this.simulationTime = this.simulationTime + time;
@@ -127,19 +129,30 @@ export class Game {
 
         // interpolate each entity using these 2 buffers
         const [secondLatest, latest] = latestBuffers;
-        let index = 0
-        for(const entityId in this.entities) {
-            this.entities[entityId].interpolateFromBuffers(
+        let index = 0;
+        this.entities.forEach((entity) => {
+            entity.interpolateFromBuffers(
                 this.time - delayTime,
-                secondLatest, 
-                latest
+                {
+                    time: secondLatest.time,
+                    value: this.sliceEntityBuffer(secondLatest.value, index)
+                }, {
+                    time: latest.time,
+                    value: this.sliceEntityBuffer(latest.value, index)
+                }
             );
             index += 1;
-        }
+        })
     }
 
+    // order = insertion order into this.entities
     private sliceEntityBuffer(gameStateBuffer: ArrayBuffer, entityOrder: number) {
-
+        // initial time = 8 bytes
+        // each entity = this.entityArrayBufferLength bytes
+        return gameStateBuffer.slice(
+            8 + entityOrder * this.entityArrayBufferLength,
+            8 + (entityOrder + 1) * this.entityArrayBufferLength
+        );
     }
 
     // assume that current Game values = values for the render frame
@@ -155,9 +168,9 @@ export class Game {
 
         // map will be static
         // need to update npc and player position + statusEffects
-        for(const entityId in this.entities) {
-            container.addChild(this.entities[entityId].getCurrentSprite(0))
-        }
+        this.entities.forEach((entity) => {
+            container.addChild(entity.getCurrentSprite(0))
+        })
 
         console.log(container)
         return container;
@@ -170,12 +183,14 @@ export class Game {
     }
 
     get entityArrayBufferLength() {
-        let length = -1;
-        for(let entityId in this.entities) {
-            length = this.entities[entityId].arrayBufferByteLength;
-            break;
+        // assume: all entities same length
+        const iterator = this.entities.values();
+        const testEntity = iterator.next().value;
+
+        if(!testEntity || !(testEntity instanceof Entity)) {
+            throw new Error(`Negative entity array length.`)
         }
-        return length;
+        return testEntity.arrayBufferByteLength;
     }
 
     get arrayBufferLength() {
@@ -192,15 +207,13 @@ export class Game {
         bufferView[0] = this.simulationTime;
 
         let index = 0;
-        for(const entityId in this.entities) {
-            // offset for Float64Array set method is in number indexes, not bytes
-            // offset for 1st number + (number of entities) * (numbers for one entity)
+        this.entities.forEach((entity) => {
             bufferView.set(
-                this.entities[entityId].toBufferView(),
-                Math.floor((8 + index * this.entities[entityId].arrayBufferByteLength) / 8)
+                entity.toBufferView(),
+                Math.floor((8 + index * entity.arrayBufferByteLength) / 8)
             )
             index += 1;
-        }
+        });
 
         return buffer;
     }
@@ -215,12 +228,13 @@ export class Game {
         this.simulationTime = bufferView[0];
 
         let index = 0;
-        for(const entityId in this.entities) {
-            this.entities[entityId].updateFromArrayBuffer(
-                buffer.slice(8 + index * this.entityArrayBufferLength,8 + (index + 1) * this.entityArrayBufferLength)
+        this.entities.forEach((entity) => {
+
+            entity.updateFromArrayBuffer(
+                this.sliceEntityBuffer(buffer, index)
             )
 
             index += 1;
-        }
+        })
     }
 }
