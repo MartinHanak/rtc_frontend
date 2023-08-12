@@ -78,7 +78,7 @@ export class Player extends Entity {
         this.velocity = [this.currentPlayerCommand.velocity.x,this.currentPlayerCommand.velocity.y]
     }
 
-    move(deltaTime: number) {
+    public move(deltaTime: number) {
         // movement speed + pushBack speed
         // TEMPORARY: only movement
         this.position = [

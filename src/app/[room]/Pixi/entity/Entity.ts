@@ -223,14 +223,69 @@ export abstract class Entity {
 
     public interpolateFromBuffers(time: number, secondLatest : {time: number, value: ArrayBuffer}, latest:  {time: number, value: ArrayBuffer}){
 
-        // if time > last buffer (including delay): 
-        // extrapolate = same status, constant velocity
+        const secondLatestValues = this.extractValuesFromArrayBuffer(secondLatest.value);
+        const latestValues = this.extractValuesFromArrayBuffer(latest.value);
 
-        // if time < last buffer:
-        // interpolate = linear position / velocity between two times
-        // status effects: look at both frames, choose one where non-zero duration (if any)
+        if(time > latest.time) {
+            // if time > last buffer (including delay): 
+            // extrapolate = same status, constant velocity
+            const delta = latest.time - time;
+            this.position = [
+                latestValues.position[0] + delta * latestValues.velocity[0],
+                latestValues.position[1] + delta * latestValues.velocity[1]
+            ];
 
-        // apply new values to current entity
+            Object.values( StatusEffectType ).forEach((value: StatusEffectType, index: number) => {
+                this._statusEffects[value].startTime = latestValues.statusEffects[value].startTime;
+                this._statusEffects[value].duration = latestValues.statusEffects[value].duration;
+                this._statusEffects[value].direction = [...latestValues.statusEffects[value].direction];
+            });
+
+
+        } else if (time <= latest.time && time >= secondLatest.time) {
+            // if time < last buffer:
+            // interpolate = linear position / velocity between two times
+            // status effects: look at both frames, choose one where non-zero duration (if any)
+            const fraction = (latest.time - secondLatest.time) / (time - secondLatest.time);
+            this.position = [
+                secondLatestValues.position[0] +  fraction * (latestValues.position[0] - secondLatestValues.position[0]),
+                secondLatestValues.position[1] +  fraction * (latestValues.position[1] - secondLatestValues.position[1])
+            ];
+
+            Object.values( StatusEffectType ).forEach((value: StatusEffectType, index: number) => {
+                // prefer latest time statusEffect
+                if(latestValues.statusEffects[value].duration > 0) {
+                    this._statusEffects[value].startTime = latestValues.statusEffects[value].startTime;
+                    this._statusEffects[value].duration = latestValues.statusEffects[value].duration;
+                    this._statusEffects[value].direction = [...latestValues.statusEffects[value].direction];
+                } else if(secondLatestValues.statusEffects[value].duration > 0) {
+                    this._statusEffects[value].startTime = secondLatestValues.statusEffects[value].startTime;
+                    this._statusEffects[value].duration = secondLatestValues.statusEffects[value].duration;
+                    this._statusEffects[value].direction = [...secondLatestValues.statusEffects[value].direction];
+                }
+            });
+
+
+        } else {
+            // if time < secondLast buffer (should not happen too often)
+            // use state = secondLast buffer
+            // and assume constant velocity up to secondLast buffer 
+            // negative time delta: delta < 0
+            const delta = time - secondLatest.time;
+            this.position = [
+                secondLatestValues.position[0] + delta * secondLatestValues.velocity[0],
+                secondLatestValues.position[1] + delta * secondLatestValues.velocity[1]
+            ];
+
+            Object.values( StatusEffectType ).forEach((value: StatusEffectType, index: number) => {
+                this._statusEffects[value].startTime = secondLatestValues.statusEffects[value].startTime;
+                this._statusEffects[value].duration = secondLatestValues.statusEffects[value].duration;
+                this._statusEffects[value].direction = [...secondLatestValues.statusEffects[value].direction];
+            });
+        }
+
+        // applied values different in all cases
+        // velocity is not displayed = does not have to be updated
 
     }
 }

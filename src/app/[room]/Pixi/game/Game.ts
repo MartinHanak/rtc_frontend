@@ -118,10 +118,28 @@ export class Game {
     public interpolateNonLocalEntities(delayTime: number) {
 
         // get LAST TWO BUFFERS
+        const latestBuffers = this.serverStateBuffer.getTwoLatestValues();
 
-        // check if 2 buffers exist AND their times are within range
+        // not enough buffers = keep original state
+        if(!latestBuffers) {
+            return
+        }
 
         // interpolate each entity using these 2 buffers
+        const [secondLatest, latest] = latestBuffers;
+        let index = 0
+        for(const entityId in this.entities) {
+            this.entities[entityId].interpolateFromBuffers(
+                this.time - delayTime,
+                secondLatest, 
+                latest
+            );
+            index += 1;
+        }
+    }
+
+    private sliceEntityBuffer(gameStateBuffer: ArrayBuffer, entityOrder: number) {
+
     }
 
     // assume that current Game values = values for the render frame
