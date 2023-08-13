@@ -117,7 +117,7 @@ export class Game {
     // updates their values from 2 buffered values (interpolated)
     // that is: non-local entities are shown in the past
     // for now assume delayTime will be constant during the whole game
-    public interpolateNonLocalEntities(delayTime: number) {
+    public interpolateNonLocalEntities(delayTime: number, localId: string) {
 
         // get LAST TWO BUFFERS
         const latestBuffers = this.serverStateBuffer.getTwoLatestValues();
@@ -131,16 +131,20 @@ export class Game {
         const [secondLatest, latest] = latestBuffers;
         let index = 0;
         this.entities.forEach((entity) => {
-            entity.interpolateFromBuffers(
-                this.time - delayTime,
-                {
-                    time: secondLatest.time,
-                    value: this.sliceEntityBuffer(secondLatest.value, index)
-                }, {
-                    time: latest.time,
-                    value: this.sliceEntityBuffer(latest.value, index)
-                }
-            );
+
+            // local player uses client-side prediction
+            if(entity.id !== localId) {
+                entity.interpolateFromBuffers(
+                    this.time - delayTime,
+                    {
+                        time: secondLatest.time,
+                        value: this.sliceEntityBuffer(secondLatest.value, index)
+                    }, {
+                        time: latest.time,
+                        value: this.sliceEntityBuffer(latest.value, index)
+                    }
+                );
+            }
             index += 1;
         })
     }
@@ -153,6 +157,17 @@ export class Game {
             8 + entityOrder * this.entityArrayBufferLength,
             8 + (entityOrder + 1) * this.entityArrayBufferLength
         );
+    }
+
+    // aproximates server delay = time between last two game states from the server
+    get serverDelay() {
+        const buffers = this.serverStateBuffer.getTwoLatestValues();
+
+        if(!buffers) {
+            return 0
+        } else {
+            return (buffers[1].time - buffers[0].time) / 2
+        }
     }
 
     // assume that current Game values = values for the render frame
@@ -179,7 +194,7 @@ export class Game {
  
 
     get entitiesNumber() {
-        return Object.keys(this.entities).length;
+        return this.entities.size;
     }
 
     get entityArrayBufferLength() {

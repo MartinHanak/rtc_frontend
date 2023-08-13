@@ -41,6 +41,12 @@ describe('Game class', () => {
         expect(game.time).toEqual(27);
     })
 
+    it('should provide correct number of entities', () => {
+        const number = game.entitiesNumber;
+
+        expect(number).toEqual(4);
+    })
+
     it('should return correct size of the entity array buffer', () => {
         const bufferLength = game.entityArrayBufferLength;
 

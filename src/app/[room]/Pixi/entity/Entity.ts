@@ -11,7 +11,7 @@ export abstract class Entity {
     private currentSpriteContainer: Container;
 
     private _position: Point = new Point(0, 0);
-    private _speed: number = 20 / 1000; // units = pixel per ms
+    private _speed: number = 1000 / 1000; // units = pixel per ms
     private _pushBackSpeed: number = 40;
     private _velocity: Point = new Point(0, 0); // does not include push-back from others
 
@@ -227,9 +227,10 @@ export abstract class Entity {
         const latestValues = this.extractValuesFromArrayBuffer(latest.value);
 
         if(time > latest.time) {
+            console.log(`FUTURE`);
             // if time > last buffer (including delay): 
             // extrapolate = same status, constant velocity
-            const delta = latest.time - time;
+            const delta = time - latest.time ;
             this.position = [
                 latestValues.position[0] + delta * latestValues.velocity[0],
                 latestValues.position[1] + delta * latestValues.velocity[1]
@@ -243,10 +244,11 @@ export abstract class Entity {
 
 
         } else if (time <= latest.time && time >= secondLatest.time) {
+            console.log('BETWEEN')
             // if time < last buffer:
             // interpolate = linear position / velocity between two times
             // status effects: look at both frames, choose one where non-zero duration (if any)
-            const fraction = (latest.time - secondLatest.time) / (time - secondLatest.time);
+            const fraction = (time - secondLatest.time) / (latest.time - secondLatest.time);
             this.position = [
                 secondLatestValues.position[0] +  fraction * (latestValues.position[0] - secondLatestValues.position[0]),
                 secondLatestValues.position[1] +  fraction * (latestValues.position[1] - secondLatestValues.position[1])
@@ -267,6 +269,7 @@ export abstract class Entity {
 
 
         } else {
+            console.log('PAST')
             // if time < secondLast buffer (should not happen too often)
             // use state = secondLast buffer
             // and assume constant velocity up to secondLast buffer 
