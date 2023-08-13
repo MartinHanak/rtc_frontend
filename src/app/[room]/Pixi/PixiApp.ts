@@ -9,6 +9,7 @@ import { Game } from "./game/Game";
 import { InputListener } from "./game/InputListener";
 import { Messenger } from "./game/Messenger";
 import { dataChannelWithSocketId } from "../components/WebRTCContext";
+import { Server } from "./game/Server";
 
 type nameInput = {
     id: string,
@@ -31,6 +32,8 @@ export class PixiApp {
     // match player Id to player name
     private playerNamesInput: nameInput[];
     public playerNames: Record<string, string>; 
+
+    public server: Server;
 
     constructor(parentContainer: HTMLDivElement, localId: string, hostId: string, dataChannels: dataChannelWithSocketId[],nameInput?:nameInput[]) {
         console.log(`Initializing PixiApp`);
@@ -161,6 +164,10 @@ export class PixiApp {
             this.application.stop();
             this.application.destroy(true);
             this.application = null;
+        }
+
+        if(this.server) {
+            this.server.stop();
         }
     }
 }

@@ -68,11 +68,13 @@ export class PlayingState extends State {
                 this.context.appWrapper.messenger
             );
 
+            this.context.appWrapper.server = this.server;
+
            this.server.start();
         }
 
         // client-side: start listening for game states from the server
-        this.context.appWrapper.messenger.listenForGameState(game.serverStateBuffer);
+        this.context.appWrapper.messenger.listenForGameState(game.serverStateBuffer, game);
 
         const frame = game.getCurrentFrame();
         this.context.app.stage.addChild(frame);

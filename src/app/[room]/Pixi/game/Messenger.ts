@@ -1,6 +1,7 @@
 // abstract sending / receiving messages through WebRTC
 
 import { ArrayBufferBuffer } from "./ArrayBufferBuffer";
+import { Game } from "./Game";
 
 export type dataChannelInput = {
     id: string,
@@ -13,6 +14,12 @@ export class Messenger {
     private localId: string;
     private dataChannels: Record<string, RTCDataChannel>
 
+    private hostGameStateHandler: (event: CustomEvent<ArrayBuffer>) => void;
+    private hostCommandHandler: (event: CustomEvent<ArrayBuffer>) => void;
+
+    private dataChannelGameStateHandlers:  Record<string, (event: MessageEvent<ArrayBuffer>) => void>
+    private dataChannelCommandHandlers: Record<string, (event: MessageEvent<ArrayBuffer>) => void>
+
     constructor(localId: string, hostId: string, dataChannels: dataChannelInput[]) {
 
         console.log(`Creating Messenger with ${dataChannels.length} connections`);
@@ -23,6 +30,9 @@ export class Messenger {
         dataChannels.forEach((input) => {
             this.dataChannels[input.id] = input.dataChannel;
         });
+
+        this.dataChannelGameStateHandlers = {};
+        this.dataChannelCommandHandlers = {};
     }
 
     get playerIds() {
@@ -83,14 +93,14 @@ export class Messenger {
                     throw new Error(`Messenger dit not find data channel corresponding to the player ${playerId}.`);
                 }
 
-                this.dataChannels[playerId].addEventListener('message', (event : MessageEvent<ArrayBuffer>) => {
-                    this.insertCommand(event.data, playerBuffers[playerId]);
-                })
+                this.dataChannelCommandHandlers[playerId] = (event) => this.handleDataChannelCommand(event,playerBuffers[playerId]);
+
+                this.dataChannels[playerId].addEventListener('message', this.dataChannelCommandHandlers[playerId])
             } else  {
                 // host event
-                window.addEventListener("hostCommand", (event: CustomEvent<ArrayBuffer>) => {
-                   this.insertCommand(event.detail, playerBuffers[playerId]);
-                })
+                this.hostCommandHandler = (event) => this.handleHostCommand(event, playerBuffers[playerId]);
+
+                window.addEventListener("hostCommand", this.hostCommandHandler);
             }
 
             
@@ -123,29 +133,48 @@ export class Messenger {
     }
 
     // each client runs their own version with their own buffer
-    public listenForGameState(buffer: ArrayBufferBuffer) {
+    public listenForGameState(buffer: ArrayBufferBuffer, localGame: Game) {
         // host
         if(this.localId === this.hostId) {
 
-            window.addEventListener("hostGameState", (event) => {
-                let time = Math.floor(this.readArrayBufferTime(event.detail));
-                buffer.insert(time,event.detail);
-            })
+            this.hostGameStateHandler = (event) => this.handleHostGameState(event, buffer, localGame);
+
+            window.addEventListener("hostGameState",  this.hostGameStateHandler)
 
         } else {
             // non-host users
             // for now: only one data channel should be open for non-hosts
             for(const playerId in this.dataChannels) {
+                this.dataChannelGameStateHandlers[playerId] = (event: MessageEvent<ArrayBuffer>) => this.handleDataChannelGameState(event, buffer, localGame);
 
-                this.dataChannels[playerId].addEventListener('message', (event: MessageEvent<ArrayBuffer>) => {
-
-                    let time = this.readArrayBufferTime(event.data);
-                    buffer.insert(time,event.data);
-
-                })
+                this.dataChannels[playerId].addEventListener('message', this.dataChannelGameStateHandlers[playerId])
 
             }
         }
     }
+
+    private handleHostGameState(event: CustomEvent<ArrayBuffer>, buffer: ArrayBufferBuffer, localGame: Game) {
+
+        let time = Math.floor(this.readArrayBufferTime(event.detail));
+        buffer.insert(time,event.detail);
+        localGame.serverDelay = localGame.time - time;
+        console.log(`Delay: ${localGame.serverDelay} `)
+    }
+
+    private handleDataChannelGameState(event: MessageEvent<ArrayBuffer>, buffer: ArrayBufferBuffer, localGame: Game) {
+        let time = this.readArrayBufferTime(event.data);
+        buffer.insert(time,event.data);
+        localGame.serverDelay = localGame.time - time;
+        console.log(`Delay: ${localGame.serverDelay} `)
+    }
+
+    private handleHostCommand(event: CustomEvent<ArrayBuffer>, buffer: ArrayBufferBuffer) {
+        this.insertCommand(event.detail, buffer);
+    }
+
+    private handleDataChannelCommand(event: MessageEvent<ArrayBuffer>, buffer: ArrayBufferBuffer) {
+        this.insertCommand(event.data, buffer);
+    }
+
 
 }

@@ -12,6 +12,7 @@ import { ArrayBufferBuffer } from "./ArrayBufferBuffer";
 export class Game {
 
     private simulationTime : number;
+    private _serverDelay: number;
     get time() {
         return this.simulationTime;
     }
@@ -41,6 +42,7 @@ export class Game {
         })
 
         this.simulationTime = 0;
+        this._serverDelay = 0;
         this.initializeEntityPositions();
 
         this.localCommandsBuffer = new ArrayBufferBuffer();
@@ -161,13 +163,17 @@ export class Game {
 
     // aproximates server delay = time between last two game states from the server
     get serverDelay() {
-        const buffers = this.serverStateBuffer.getTwoLatestValues();
+        return this._serverDelay;
+    }
 
-        if(!buffers) {
-            return 0
-        } else {
-            return (buffers[1].time - buffers[0].time) / 2
+    set serverDelay(delay: number) {
+        const buffers = this.serverStateBuffer.getTwoLatestValues();
+        let halfTimeBetweenServerStates = 0;
+        if(buffers) {
+            halfTimeBetweenServerStates = (buffers[1].time - buffers[0].time)/2;
         }
+
+        this._serverDelay = delay + halfTimeBetweenServerStates;
     }
 
     // assume that current Game values = values for the render frame
