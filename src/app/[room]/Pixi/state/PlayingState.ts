@@ -121,7 +121,8 @@ export class PlayingState extends State {
                 commandForCurrentFrame
             )
 
-            // LATER: save command to local command buffer
+            // save command to local command buffer
+            game.localCommandsBuffer.insert(game.time,commandForCurrentFrame);
 
             // apply command to update player state
             localPlayer.applyCurrentCommand();
@@ -129,12 +130,11 @@ export class PlayingState extends State {
             // non-local players: interpolation
             game.interpolateNonLocalEntities(game.serverDelay, localPlayerId);
 
-            // LATER: discard old game states
-
             // update game state (client-side prediction)
             // later: add server-check (server reconsiliation)
             game.progressGameState(delta);
 
+            // discard old game states and local command buffer values
         })
 
     }

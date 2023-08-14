@@ -77,6 +77,14 @@ export abstract class Entity {
     // update position
     public abstract move(deltaTime: number): void;
 
+    public getStatusEffect(type: StatusEffectType) {
+        const effect = this._statusEffects[type];
+        if(!effect) {
+            throw new Error(`Status effect ${type} not found.`);
+        }
+        return effect;
+    }
+
     public attack(startTime: number, x: number, y: number) {
 
         this._statusEffects.ATTACK = new StatusEffect(

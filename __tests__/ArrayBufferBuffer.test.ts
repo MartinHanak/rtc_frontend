@@ -79,4 +79,26 @@ describe('ArrayBufferBuffer class', () => {
         
     })
 
+    it('returns correctly two latest values', () => {
+        const buffer = new ArrayBufferBuffer();
+        const input = new ArrayBuffer(8);
+
+        expect(buffer.getTwoLatestValues()).toBe(null);
+
+        buffer.insert(0, input);
+
+        expect(buffer.getTwoLatestValues()).toBe(null);
+
+        buffer.insert(1, input);
+
+        const buffers= buffer.getTwoLatestValues();
+
+        expect(buffers).not.toBe(null);
+
+        if(buffers) {
+            expect(buffers[0].time).toEqual(0);
+            expect(buffers[1].time).toEqual(1);
+        }
+    })
+
 })
