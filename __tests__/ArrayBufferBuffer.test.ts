@@ -101,4 +101,54 @@ describe('ArrayBufferBuffer class', () => {
         }
     })
 
+    it('can find two buffers around specified time', () => {
+        const buffer = new ArrayBufferBuffer();
+
+        const input = new ArrayBuffer(8);
+
+        for(let i = 0; i < 10; i ++) {
+            buffer.insert(i,input);
+        }
+
+        const valuesAround5 = buffer.getBuffersAroundValue(5);
+
+        expect(valuesAround5).not.toBe(null);
+        if(valuesAround5) {
+            expect(valuesAround5[0].time).toEqual(5)
+            expect(valuesAround5[1].time).toEqual(6);
+        }
+
+        const valuesAround17 = buffer.getBuffersAroundValue(1.7);
+
+        expect(valuesAround17).not.toBe(null);
+        if(valuesAround17) {
+            expect(valuesAround17[0].time).toEqual(1)
+            expect(valuesAround17[1].time).toEqual(2);
+        }
+
+        const valuesAround0 = buffer.getBuffersAroundValue(-1);
+        expect(valuesAround0).toBe(null);
+
+        const valuesAround10 = buffer.getBuffersAroundValue(10);
+        expect(valuesAround10).toBe(null);
+
+        const valuesAround7 = buffer.getBuffersAroundValue(7);
+        expect(valuesAround7).not.toBe(null);
+        if(valuesAround7) {
+            const valueBefore = valuesAround7[0].value;
+            const valueAfter = valuesAround7[1].value;
+
+            expect(valueBefore).not.toBe(null);
+            expect(valueAfter).not.toBe(null);
+            if(valueAfter && valueBefore) {
+                const bufferViewBefore = new Float64Array(valueBefore);
+                const bufferViewAfter = new Float64Array(valueAfter);
+
+                expect(bufferViewBefore[0]).toEqual(0);
+                expect(bufferViewAfter[0]).toEqual(0);
+            }
+        }
+
+    })
+
 })

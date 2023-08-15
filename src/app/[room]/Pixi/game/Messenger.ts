@@ -158,14 +158,18 @@ export class Messenger {
         let time = Math.floor(this.readArrayBufferTime(event.detail));
         buffer.insert(time,event.detail);
         localGame.serverDelay = localGame.time - time;
-        console.log(`Delay: ${localGame.serverDelay} `)
+        // run server reconciliation
+        localGame.serverReconciliation(time,event.detail);
+        console.log(`Delay: ${localGame.serverDelay} `);
     }
 
     private handleDataChannelGameState(event: MessageEvent<ArrayBuffer>, buffer: ArrayBufferBuffer, localGame: Game) {
         let time = this.readArrayBufferTime(event.data);
         buffer.insert(time,event.data);
         localGame.serverDelay = localGame.time - time;
-        console.log(`Delay: ${localGame.serverDelay} `)
+        // run server reconciliation 
+        localGame.serverReconciliation(time, event.data);
+        console.log(`Delay: ${localGame.serverDelay} `);
     }
 
     private handleHostCommand(event: CustomEvent<ArrayBuffer>, buffer: ArrayBufferBuffer) {

@@ -18,24 +18,32 @@ export class Game {
     }
 
     // players and npcs, npcs at the end
+    private localPlayerId: string;
+    private localPlayerOrder: number;
     private entities: Map<string,Entity> ;
 
     private map : GameMap; // background + boundaries + static assets
 
     public serverStateBuffer : ArrayBufferBuffer;
-    // private localStateBuffer : GameStateBuffer;
+    public localStateBuffer : ArrayBufferBuffer;
     public localCommandsBuffer : ArrayBufferBuffer;
 
-    constructor(map: GameMap, players: Player[], npcs: Npc[]) {
+    constructor(map: GameMap, localPlayerId: string, players: Player[], npcs: Npc[]) {
         this.map = map;
+
+        this.localPlayerId = localPlayerId;
 
         // sort input players 
         // so that input order does not matter
         players.sort((a,b) => {return a.id > b.id ? 1 : -1})
 
         this.entities = new Map<string,Entity>();
-        players.forEach((player) => {
+        players.forEach((player,index) => {
             this.entities.set(player.id, player);
+
+            if(player.id === this.localPlayerId) {
+                this.localPlayerOrder = index;
+            }
         })
         npcs.forEach((npc) => {
             this.entities.set(npc.id, npc);
@@ -46,6 +54,7 @@ export class Game {
         this.initializeEntityPositions();
 
         this.localCommandsBuffer = new ArrayBufferBuffer();
+        this.localStateBuffer = new ArrayBufferBuffer();
         this.serverStateBuffer = new ArrayBufferBuffer();
     }
 
@@ -257,5 +266,28 @@ export class Game {
 
             index += 1;
         })
+    }
+
+    // runs when new game state arrives from the server
+    // compare server state with local state (from the past)
+    // if difference too big, update local player (given command from the past up to present)
+    public serverReconciliation(serverTime: number, serverGameState: ArrayBuffer) {
+        // find 2 closest local game state buffers
+
+        // if none found, do nothing
+
+        // if found = extrapolate values to serverTime
+
+        // compare extrapolated values with server values
+
+        // if difference too big:
+        // update local player given commands from buffer
+
+        // discard old commands
+        this.localCommandsBuffer.removeValuesUpto(serverTime);
+
+        // discard old game states
+        this.localStateBuffer.removeValuesUpto(serverTime);
+
     }
 }

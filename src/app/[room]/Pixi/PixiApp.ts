@@ -147,7 +147,7 @@ export class PixiApp {
         const mapBoundaryPoints : pointInput[] = [[100,100],[100,900],[900,900],[900,100]];
         const testMap = new Map(mapBoundaryPoints, new Sprite(testTexture));
 
-        const testGame = new Game(testMap,players,[testNpc1, testNpc2]);
+        const testGame = new Game(testMap, this.localId, players,[testNpc1, testNpc2]);
         console.log(`New game created`)
         console.log(testGame);
         return testGame;

@@ -132,7 +132,52 @@ export class ArrayBufferBuffer {
                 value: this.latest.value
             }]
         }
+    }
 
+    // find 2 closest buffers around specified time
+    // if no buffers around specified time found, return null
+    public getBuffersAroundValue(inputTime: number) {
+
+        if(!this.head) {
+            return null;
+        }
+
+        let valueBefore : {time: number, value: null | ArrayBuffer} = {
+            time: -Infinity,
+            value: null
+        }
+        let valueAfter : {time: number, value: null | ArrayBuffer} = {
+            time: Infinity,
+            value: null
+        }
+
+        let current : ListNode | null = this.head;
+        while(current) {
+            if(current.time <= inputTime && current.time > valueBefore.time) {
+                valueBefore.time = current.time;
+                valueBefore.value = current.value;
+            }
+
+            if(current.time > inputTime && current.time < valueAfter.time) {
+                valueAfter.time = current.time;
+                valueAfter.value = current.value;
+            }
+
+
+            // optimization: if time too far, do not look further
+            // do not look beyond 1000 ms after input time
+            if(current.time - inputTime > 1000) {
+                break;
+            }
+
+            current = current.next;
+        }
+
+        if(valueAfter.value && valueBefore.value) {
+            return [valueBefore, valueAfter];
+        } 
+        
+        return null;
         
     }
 }

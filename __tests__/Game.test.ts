@@ -16,7 +16,7 @@ const npc1 = new Npc('2','2',mockSprite);
 const npc2 = new Npc('3','3',mockSprite);
 
 const mapBoundaryPoints : pointInput[] = [[100,100],[100,900],[900,900],[900,100]];
-const game = new Game(new Map(mapBoundaryPoints,mockSprite),[player1,player2],[npc1, npc2]);
+const game = new Game(new Map(mapBoundaryPoints,mockSprite),'0',[player1,player2],[npc1, npc2]);
 
 describe('Game class', () => {
     beforeAll(() => {
