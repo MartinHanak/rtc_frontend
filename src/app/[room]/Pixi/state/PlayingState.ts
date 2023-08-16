@@ -124,7 +124,7 @@ export class PlayingState extends State {
             // save command to local command buffer
             game.localCommandsBuffer.insert(game.time, commandForCurrentFrame);
             // save game state to local buffer
-            game.localStateBuffer.insert(game.time, game.toArrayBuffer());
+            game.localStateBuffer.insert(game.time, game.getEntity(localPlayerId).toBufferView().buffer);
 
             // apply command to update player state
             localPlayer.applyCurrentCommand();

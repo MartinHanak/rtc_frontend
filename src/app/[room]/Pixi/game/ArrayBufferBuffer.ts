@@ -1,6 +1,11 @@
+export type bufferWithTime = {
+    time: number, 
+    value: ArrayBuffer
+}
+
 export class ArrayBufferBuffer {
-    private head: ListNode | null;
-    private tail: ListNode | null;
+    public head: ListNode | null;
+    public tail: ListNode | null;
     public bufferLength: number;
     public lastInsertedTime: number | null;
 
@@ -142,11 +147,11 @@ export class ArrayBufferBuffer {
             return null;
         }
 
-        let valueBefore : {time: number, value: null | ArrayBuffer} = {
+        let valueBefore : { time: number, value: ArrayBuffer | null } = {
             time: -Infinity,
             value: null
         }
-        let valueAfter : {time: number, value: null | ArrayBuffer} = {
+        let valueAfter : { time: number, value: ArrayBuffer | null } = {
             time: Infinity,
             value: null
         }

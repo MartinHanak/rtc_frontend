@@ -1,6 +1,7 @@
 import { Container, Point, Sprite } from "pixi.js";
 import { STATUS_EFFECT_LENGTH, STATUS_EFFECT_NUMBER, StatusEffect, StatusEffectType, getStringEnumIndex, getStringEnumValue } from "./StatusEffect";
 import { pointInput } from "../object/Map";
+import { ArrayBufferBuffer, bufferWithTime } from "../game/ArrayBufferBuffer";
 
 export abstract class Entity {
 
@@ -262,6 +263,11 @@ export abstract class Entity {
                 secondLatestValues.position[1] +  fraction * (latestValues.position[1] - secondLatestValues.position[1])
             ];
 
+            this.velocity = [
+                secondLatestValues.velocity[0] +  fraction * (latestValues.velocity[0] - secondLatestValues.velocity[0]),
+                secondLatestValues.velocity[1] +  fraction * (latestValues.velocity[1] - secondLatestValues.velocity[1])
+            ];
+
             Object.values( StatusEffectType ).forEach((value: StatusEffectType, index: number) => {
                 // prefer latest time statusEffect
                 if(latestValues.statusEffects[value].duration > 0) {
@@ -297,6 +303,90 @@ export abstract class Entity {
 
         // applied values different in all cases
         // velocity is not displayed = does not have to be updated
+
+    }
+
+    private interpolateValues(targetTime: number, before: bufferWithTime, after: bufferWithTime ) {
+        const valuesBefore = this.extractValuesFromArrayBuffer(before.value);
+        const valuesAfter = this.extractValuesFromArrayBuffer(after.value);
+
+        const fraction = (targetTime - before.time) / (after.time - before.time);
+
+        let result : {
+            position: [number, number],
+            velocity: [number, number],
+            statusEffects : Record<StatusEffectType,{startTime: number, duration: number, type: StatusEffectType, direction: [number,number]}>
+        } =  {
+            position: [
+                valuesBefore.position[0] + fraction * (valuesAfter.position[0] - valuesBefore.position[0]),
+                valuesBefore.position[1] + fraction * (valuesAfter.position[1] - valuesBefore.position[1])
+            ],
+            velocity: [
+                valuesBefore.velocity[0] + fraction * (valuesAfter.velocity[0] - valuesBefore.velocity[0]),
+                valuesBefore.velocity[1] + fraction * (valuesAfter.velocity[1] - valuesBefore.velocity[1])
+            ],
+            statusEffects: {} as Record<StatusEffectType,{startTime: number, duration: number, type: StatusEffectType, direction: [number,number]}>
+        }
+
+        Object.values( StatusEffectType ).forEach((value: StatusEffectType, index: number) => {
+            // default = use values before
+            // values before used if non-zero duration at targetTime
+            // duration should be longer than time difference = does not matter if we pick after/before
+            if( valuesBefore.statusEffects[value].duration > 0 
+                &&
+                (valuesBefore.statusEffects[value].startTime + valuesBefore.statusEffects[value].duration >= targetTime)
+            ) {
+                result.statusEffects[value] = {...valuesBefore.statusEffects[value]};
+            } else {
+                result.statusEffects[value] = {...valuesAfter.statusEffects[value]};
+            }
+        });
+
+        return result;
+
+    }
+
+    public serverReconciliation(server: bufferWithTime, before: bufferWithTime, after: bufferWithTime) {
+        // interpolate values to serverTime
+        if(!before.value || !after.value || !server.value) {
+            return false;
+        }
+        if(! (before.time <= server.time && server.time <= after.time)) {
+            throw new Error('Wrong order of times when server reconciliation called.')
+        }
+
+        const interpolatedValues = this.interpolateValues(server.time, before, after);
+
+        const serverValues = this.extractValuesFromArrayBuffer(server.value);
+
+        // compare extrapolated values with server values
+        // condition to trigger server reconciliation =
+        // 1. too much difference in positions
+        // 2. difference in status effects
+        const positionDifferenceThreshold = 1; // in px
+        if(
+            Math.abs(interpolatedValues.position[0] - serverValues.position[0]) > positionDifferenceThreshold
+            ||
+            Math.abs(interpolatedValues.position[1] - serverValues.position[1]) > positionDifferenceThreshold
+            ||
+            Object.values(StatusEffectType).reduce((statusEffectDifference, type) => {
+                if( serverValues.statusEffects[type].duration > 0 
+                    && 
+                    interpolatedValues.statusEffects[type].duration <= 0
+                ) {
+                    return true || statusEffectDifference
+                } else {
+                    return false || statusEffectDifference
+                }
+            }, false)
+           ) {
+            // set to server position (from the past)
+            this.updateFromArrayBuffer(server.value);
+            // next: update position to current time using commands from the buffer
+            return true
+           } else {
+            return false;
+           }
 
     }
 }

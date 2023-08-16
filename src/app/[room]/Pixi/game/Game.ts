@@ -273,21 +273,65 @@ export class Game {
     // if difference too big, update local player (given command from the past up to present)
     public serverReconciliation(serverTime: number, serverGameState: ArrayBuffer) {
         // find 2 closest local game state buffers
+        const buffers = this.localStateBuffer.getBuffersAroundValue(serverTime);
 
         // if none found, do nothing
+        if(!buffers || !buffers[0].value || !buffers[1].value) {
+            return;
+        }
 
-        // if found = extrapolate values to serverTime
 
-        // compare extrapolated values with server values
+        const update = this.getEntity(this.localPlayerId).serverReconciliation(
+            {
+                time: serverTime, 
+                value: this.sliceEntityBuffer(serverGameState, this.localPlayerOrder)
+            }, {
+                time: buffers[0].time,
+                value: buffers[0].value
+            }, {
+                time: buffers[1].time,
+                value: buffers[1].value
+            }       
+        );
 
-        // if difference too big:
-        // update local player given commands from buffer
+        // update player position from current position (server position from the past)
+        // to present (using local commands from the buffer)
+        if(update) {
+            this.updateLocalPlayer(serverTime, this.time);
+        }
 
         // discard old commands
         this.localCommandsBuffer.removeValuesUpto(serverTime);
 
         // discard old game states
         this.localStateBuffer.removeValuesUpto(serverTime);
+
+    }
+
+    private updateLocalPlayer(startTime: number, endTime: number) {
+        const localPlayer = this.getEntity(this.localPlayerId) as Player;
+
+        let currentTime = startTime;
+        let delta = 0;
+
+        let currentCommand = this.localCommandsBuffer.head;
+        while(currentCommand) {
+            // skip commands before startTime
+            if(currentCommand.time < startTime) {
+                currentCommand = currentCommand.next;
+                continue;
+            }
+
+
+            delta = currentCommand.time - currentTime;
+            currentTime = currentCommand.time;
+
+            localPlayer.updateCurrentCommandFromArrayBuffer(currentCommand.value);
+            localPlayer.applyCurrentCommand();
+            localPlayer.move(delta);
+            
+            currentCommand = currentCommand.next;
+        }
 
     }
 }
