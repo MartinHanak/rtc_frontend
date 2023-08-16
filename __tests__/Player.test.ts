@@ -1,5 +1,6 @@
 import { Player } from "@/app/[room]/Pixi/entity/Player";
 import { StatusEffectType } from "@/app/[room]/Pixi/entity/StatusEffect";
+import exp from "constants";
 import { Sprite } from "pixi.js";
 
 const sprite = new Sprite()
@@ -127,4 +128,90 @@ describe('Command class', () => {
         expect(player.position.y).toEqual(-10);
     })
 
+    it('can return correct interpolated values', () => {
+        player.position = [0,0];
+        player.velocity = [10,10];
+
+        const timeOne = 0;
+        const bufferOne = player.toBufferView().buffer;
+
+        player.position = [100,50];
+        player.velocity = [20,0];
+
+        const timeTwo = 10;
+        const bufferTwo = player.toBufferView().buffer;
+
+        const interpolated = player.interpolateValues(5,{time: timeOne, value: bufferOne}, {time: timeTwo, value: bufferTwo});
+
+        expect(interpolated.position[0]).toEqual(50);
+        expect(interpolated.position[1]).toEqual(25);
+        expect(interpolated.velocity[0]).toEqual(15);
+        expect(interpolated.velocity[1]).toEqual(5);
+    })
+
+    it('correctly decides when server reconciliation is not needed', () => {
+        // before
+        player.position = [0,0];
+        player.velocity = [10,10];
+
+        const timeOne = 0;
+        const bufferOne = player.toBufferView().buffer;
+
+        // server
+        player.position = [50,25];
+        player.velocity = [15,5];
+        const timeServer = 5;
+        const serverBuffer = player.toBufferView().buffer;
+
+        
+        // after
+        player.position = [100,50];
+        player.velocity = [20,0];
+
+        const timeTwo = 10;
+        const bufferTwo = player.toBufferView().buffer;
+
+        const needsUpdate = player.serverReconciliation({time: timeServer, value: serverBuffer}, {time:timeOne,value: bufferOne}, {time: timeTwo, value: bufferTwo});
+
+        expect(needsUpdate).toBe(false);
+        expect(player.position.x).toBe(100);
+
+        // server 2 
+        player.position = [50.5,24.5];
+        player.velocity = [15,5];
+        const timeServer2 = 5;
+        const serverBuffer2 = player.toBufferView().buffer;
+
+        const needsUpdate2 = player.serverReconciliation({time: timeServer2, value: serverBuffer2}, {time:timeOne,value: bufferOne}, {time: timeTwo, value: bufferTwo});
+
+        expect(needsUpdate2).toBe(false);
+    });
+
+    it('correctly decides when server reconciliation is needed', () => {
+        // before
+        player.position = [0,0];
+        player.velocity = [10,10];
+
+        const timeOne = 0;
+        const bufferOne = player.toBufferView().buffer;
+
+        // server
+        player.position = [55,25];
+        player.velocity = [15,5];
+        const timeServer = 5;
+        const serverBuffer = player.toBufferView().buffer;
+
+        
+        // after
+        player.position = [100,50];
+        player.velocity = [20,0];
+
+        const timeTwo = 10;
+        const bufferTwo = player.toBufferView().buffer;
+
+        const needsUpdate = player.serverReconciliation({time: timeServer, value: serverBuffer}, {time:timeOne,value: bufferOne}, {time: timeTwo, value: bufferTwo});
+
+        expect(needsUpdate).toBe(true);
+        expect(player.position.x).toEqual(55);
+    })
 })

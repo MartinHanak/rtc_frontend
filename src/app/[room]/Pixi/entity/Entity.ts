@@ -306,7 +306,7 @@ export abstract class Entity {
 
     }
 
-    private interpolateValues(targetTime: number, before: bufferWithTime, after: bufferWithTime ) {
+    public interpolateValues(targetTime: number, before: bufferWithTime, after: bufferWithTime ) {
         const valuesBefore = this.extractValuesFromArrayBuffer(before.value);
         const valuesAfter = this.extractValuesFromArrayBuffer(after.value);
 

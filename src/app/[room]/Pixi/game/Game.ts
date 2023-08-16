@@ -113,16 +113,6 @@ export class Game {
     }
 
 
-    // game state received from server every x ms
-    // frames between those state need to be interpolated
-    // local player = client-side prediction used
-    // remote player = interpolation used
-    public getCurrentGameState(simulationTime: number) {
-        // temporary:
-        // use closest gameState from the buffer (no prediction / interpolation)
-
-    } 
-
     // client-side only function
     // use server state buffer to interpolate non-local entities
     // updates their values from 2 buffered values (interpolated)
@@ -301,10 +291,10 @@ export class Game {
         }
 
         // discard old commands
-        this.localCommandsBuffer.removeValuesUpto(serverTime);
+        this.localCommandsBuffer.removeValuesUpto(serverTime - 1000);
 
-        // discard old game states
-        this.localStateBuffer.removeValuesUpto(serverTime);
+        // discard old game state
+        this.localStateBuffer.removeValuesUpto(serverTime - 1000);
 
     }
 
