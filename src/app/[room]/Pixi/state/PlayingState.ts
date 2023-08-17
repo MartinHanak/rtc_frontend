@@ -130,13 +130,14 @@ export class PlayingState extends State {
             localPlayer.applyCurrentCommand();
 
             // non-local players: interpolation
-            game.interpolateNonLocalEntities(game.serverDelay, localPlayerId);
+            game.interpolateNonLocalEntities(game.serverDelay + game.serverStateDelta, localPlayerId);
 
             // update game state (client-side prediction)
             // later: add server-check (server reconsiliation)
             game.progressGameState(delta);
 
             // discard old game states and local command buffer values
+            game.serverStateBuffer.removeValuesUpto(game.time - 2000);
         })
 
     }

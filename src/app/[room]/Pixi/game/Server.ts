@@ -52,7 +52,7 @@ export class Server {
         let startGameProgress = false;
         let previousIntervalTime = Date.now();
 
-        const initialServerDelay = this.msPerTick;
+        const initialServerDelay = Math.max(this.msPerTick, 100);
 
         this.intervalId = window.setInterval(() => {
 
@@ -60,6 +60,7 @@ export class Server {
             let tickTime = newTime - previousIntervalTime;
             let stepTime = tickTime / this.stepsInOneTick;
             previousIntervalTime = newTime;
+            console.log(`Tick time: ${tickTime}`);
 
             // send first game state after receiving enough (empty) commands from all players
             if(!firstGameStateSent) {

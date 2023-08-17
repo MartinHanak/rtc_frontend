@@ -43,6 +43,7 @@ export class Game {
 
             if(player.id === this.localPlayerId) {
                 this.localPlayerOrder = index;
+                console.log(`Local player: ${player.id}`);
             }
         })
         npcs.forEach((npc) => {
@@ -50,7 +51,7 @@ export class Game {
         })
 
         this.simulationTime = 0;
-        this._serverDelay = 0;
+        this._serverDelay = 100;
         this.initializeEntityPositions();
 
         this.localCommandsBuffer = new ArrayBufferBuffer();
@@ -160,19 +161,27 @@ export class Game {
         );
     }
 
-    // aproximates server delay = time between last two game states from the server
+    // approximates server delay = time between last two game states from the server
     get serverDelay() {
         return this._serverDelay;
     }
 
+    // set delay as approximate running average
     set serverDelay(delay: number) {
-        const buffers = this.serverStateBuffer.getTwoLatestValues();
-        let halfTimeBetweenServerStates = 0;
-        if(buffers) {
-            halfTimeBetweenServerStates = (buffers[1].time - buffers[0].time)/2;
-        }
+        
+        let runningAverage = this.serverDelay - this.serverDelay / 100;
+        runningAverage += delay / 100;
 
-        this._serverDelay = delay + halfTimeBetweenServerStates;
+        this._serverDelay =  runningAverage;
+    }
+
+    get serverStateDelta() {
+        const buffers = this.serverStateBuffer.getTwoLatestValues();
+        let serverStateDelta = 0;
+        if(buffers) {
+            serverStateDelta = (buffers[1].time - buffers[0].time)*0.9;
+        }
+        return serverStateDelta;
     }
 
     // assume that current Game values = values for the render frame
@@ -267,6 +276,9 @@ export class Game {
 
         // if none found, do nothing
         if(!buffers || !buffers[0].value || !buffers[1].value) {
+            if(serverTime > 1000) {
+                throw new Error('No buffers found for server reconciliation')
+            }
             return;
         }
 
