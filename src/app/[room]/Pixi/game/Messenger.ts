@@ -114,7 +114,7 @@ export class Messenger {
 
         // read command time
         let time = Math.floor(this.readArrayBufferTime(command));
-        console.log(`Received command for time ${time}`);
+        //console.log(`Received command for time ${time}`);
 
         buffer.insert(time, command);
     }
@@ -171,7 +171,7 @@ export class Messenger {
         if(time > localGame.time) {
             throw new Error('Server state in front of local game state')
         }
-        
+
         buffer.insert(time,event.data);
         localGame.serverDelay = localGame.time - time;
         // run server reconciliation 

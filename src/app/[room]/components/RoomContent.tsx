@@ -35,7 +35,7 @@ export function RoomContent() {
     return (
         <div className="w-full h-full">
 
-            <Chat />
+            {null && <Chat />}
 
             <div className="w-full max-w-screen-lg aspect-video">
                 <div ref={canvasContainer} className="w-full h-full">
@@ -44,7 +44,7 @@ export function RoomContent() {
 
             {null && streamRef && streamRef.current && <Video stream={streamRef.current} />}
 
-            <PeerStreams />
+            {null && <PeerStreams />}
 
 
         </div>

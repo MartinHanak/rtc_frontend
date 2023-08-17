@@ -3,6 +3,7 @@ import { Command } from "../game/Command";
 import { movementKeys, statusKeys } from "../game/InputListener";
 import { Entity } from "./Entity";
 import { Sprite } from "pixi.js";
+import { StatusEffectType } from "./StatusEffect";
 
 export class Player extends Entity {
     // player input for the current frame
@@ -73,17 +74,30 @@ export class Player extends Entity {
     }
 
     // read values from command to update Player state
-    public applyCurrentCommand() {
+    public applyCurrentCommand(time: number) {
         // TEMPORARY: only velocity changes
-        this.velocity = [this.currentPlayerCommand.velocity.x,this.currentPlayerCommand.velocity.y]
+        this.velocity = [this.currentPlayerCommand.velocity.x, this.currentPlayerCommand.velocity.y]
+
+        if(this.currentPlayerCommand.status.ATTACK ) {
+            this.applyStatusEffect(StatusEffectType.ATTACK, time, this.velocity.x, this.velocity.y)
+        }
     }
 
     public move(deltaTime: number) {
-        // movement speed + pushBack speed
-        // TEMPORARY: only movement
+        // movement
         this.position = [
-            this.position.x + deltaTime * this.velocity.x ,
+            this.position.x + deltaTime * this.velocity.x,
             this.position.y + deltaTime * this.velocity.y
         ]
+
+
+        // pushback
+        const pushback = this.getStatusEffect(StatusEffectType.PUSHBACK)
+        if(pushback.duration > 0) {
+            this.position = [
+                this.position.x + deltaTime * pushback.direction.x * this._pushBackSpeed,
+                this.position.y + deltaTime * pushback.direction.y * this._pushBackSpeed
+            ]
+        }
     }
 }

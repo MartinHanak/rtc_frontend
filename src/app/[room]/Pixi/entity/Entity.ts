@@ -11,10 +11,10 @@ export abstract class Entity {
     private sprite: Sprite;
     private currentSpriteContainer: Container;
 
-    private _position: Point = new Point(0, 0);
-    private _speed: number = 1000 / 1000; // units = pixel per ms
-    private _pushBackSpeed: number = 40;
-    private _velocity: Point = new Point(0, 0); // does not include push-back from others
+    private _position: Point ;
+    private _speed: number = 0.5; // units = pixel per ms
+    protected _pushBackSpeed: number = 1;
+    private _velocity: Point ; // does not include push-back from others
 
     get speed() {
         return this._speed;
@@ -26,12 +26,15 @@ export abstract class Entity {
 
     private _attackCoolDownTime: number = 1000; // ms
     private _blockCoolDownTime: number = 2000;
-    private _statusEffects: Record<StatusEffectType, StatusEffect>
+    protected _statusEffects: Record<StatusEffectType, StatusEffect>
     
 
     constructor(id: string, name: string, sprite: Sprite) {
         this.id = id;
         this.name = name;
+
+        this._position = new Point(0, 0);
+        this._velocity = new Point(0, 0);
 
         this.sprite = sprite;
         this.currentSpriteContainer = new Container();
@@ -43,17 +46,6 @@ export abstract class Entity {
             return [StatusEffectType[value], new StatusEffect(0,0,StatusEffectType[value],0,0)]
         })) as Record<StatusEffectType, StatusEffect>
         
-        /*
-        this._statusEffects = {};
-        this._statusEffects.ATTACK = new StatusEffect(0,0,StatusEffectType['ATTACK'],0,0)
-        this._statusEffects.BLOCK = new StatusEffect(0,0,StatusEffectType['BLOCK'],0,0)
-        this._statusEffects.PUSHBACK = new StatusEffect(0,0,StatusEffectType['PUSHBACK'],0,0)
-        */
-        /*
-        Object.values(StatusEffectType).forEach((value: StatusEffectType, index) => {
-            this._statusEffects[value] = new StatusEffect(0,0,StatusEffectType[value],0,0);
-        })
-        */
     }
 
 
@@ -86,40 +78,22 @@ export abstract class Entity {
         return effect;
     }
 
-    public attack(startTime: number, x: number, y: number) {
+    public applyStatusEffect(type: StatusEffectType, startTime: number, x: number, y: number, duration?: number) {
+        // normalize direction:
+        const vectorLength = Math.sqrt(x*x + y*y);
 
-        this._statusEffects.ATTACK = new StatusEffect(
-            startTime,
-            this._attackDuration,
-            StatusEffectType.ATTACK, 
-            x, y
-        );
+        this._statusEffects[type].startTime = startTime;
+        this._statusEffects[type].duration = duration? duration : 1000;
+        this._statusEffects[type].direction = [x/vectorLength, y/vectorLength];
 
     }
 
-    public block(startTime: number, x: number, y: number) {
-
-        this._statusEffects.BLOCK = new StatusEffect(
-            startTime,
-            this._attackDuration,
-            StatusEffectType.BLOCK, 
-            x, y
-        );
-    }
-
-    public applyPushBack(startTime: number, x: number, y: number, duration: number) {
-
-        this._statusEffects.PUSHBACK = new StatusEffect(
-            startTime, 
-            duration,
-            StatusEffectType.PUSHBACK,
-            x, y
-        );
-    }
 
     public resetStatusEffect(type: StatusEffectType) {
         // 0 duration is considered empty
-        this._statusEffects[type] = new StatusEffect(0,0,StatusEffectType[type],0,0);
+        this._statusEffects[type].startTime = 0;
+        this._statusEffects[type].duration = 0;
+        this._statusEffects[type].direction = [0, 0];
     }
 
 

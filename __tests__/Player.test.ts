@@ -46,9 +46,9 @@ describe('Command class', () => {
         player.position = [7,7];
         player.velocity = [13,13];
 
-        player.attack(77,1,1);
-        player.block(33,-1,-1);
-        player.applyPushBack(44,0,1,100);
+        player.applyStatusEffect(StatusEffectType.ATTACK,77,1,1)
+        player.applyStatusEffect(StatusEffectType.BLOCK,33,-1,-1)
+        player.applyStatusEffect(StatusEffectType.PUSHBACK,44,0,1)
 
         const buffer = player.toBufferView().buffer;
 
@@ -56,19 +56,19 @@ describe('Command class', () => {
 
         const newAttackStatus = player2.getStatusEffect(StatusEffectType.ATTACK);
         expect(newAttackStatus.startTime).toEqual(77)
-        expect(newAttackStatus.direction.x).toEqual(1)
-        expect(newAttackStatus.direction.y).toEqual(1)
+        expect(newAttackStatus.direction.x).toEqual(0.7071067811865475)
+        expect(newAttackStatus.direction.y).toEqual(0.7071067811865475)
 
         const newBlockStatus = player2.getStatusEffect(StatusEffectType.BLOCK);
         expect(newBlockStatus.startTime).toEqual(33)
-        expect(newBlockStatus.direction.x).toEqual(-1)
-        expect(newBlockStatus.direction.y).toEqual(-1)
+        expect(newBlockStatus.direction.x).toEqual(-0.7071067811865475)
+        expect(newBlockStatus.direction.y).toEqual(-0.7071067811865475)
 
         const newPushbackStatus = player2.getStatusEffect(StatusEffectType.PUSHBACK);
         expect(newPushbackStatus.startTime).toEqual(44)
         expect(newPushbackStatus.direction.x).toEqual(0)
         expect(newPushbackStatus.direction.y).toEqual(1)
-        expect(newPushbackStatus.duration).toEqual(100)
+        expect(newPushbackStatus.duration).toEqual(1000)
     })
 
     it('should interpolate values for times between two buffers', () => {

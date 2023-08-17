@@ -127,7 +127,7 @@ export class PlayingState extends State {
             game.localStateBuffer.insert(game.time, game.getEntity(localPlayerId).toBufferView().buffer);
 
             // apply command to update player state
-            localPlayer.applyCurrentCommand();
+            localPlayer.applyCurrentCommand(game.time);
 
             // non-local players: interpolation
             game.interpolateNonLocalEntities(game.serverDelay + game.serverStateDelta, localPlayerId);

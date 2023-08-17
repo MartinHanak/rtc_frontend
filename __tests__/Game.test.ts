@@ -57,9 +57,9 @@ describe('Game class', () => {
         }
 
         playerOne.updateCurrentCommand(27,{up: false,down: false, right: true, left: false}, {attack: false, block: false});
-        playerOne.applyCurrentCommand();
+        playerOne.applyCurrentCommand(game.time);
         playerTwo.updateCurrentCommand(27,{up: false,down: true, right: false, left: false}, {attack: false, block: false});
-        playerTwo.applyCurrentCommand();
+        playerTwo.applyCurrentCommand(game.time);
 
 
         const delta = 1;
@@ -87,7 +87,7 @@ describe('Game class', () => {
         }
 
         playerOne.updateCurrentCommand(game.time,{up: false,down: false, right: true, left: false}, {attack: false, block: false});
-        playerOne.applyCurrentCommand();
+        playerOne.applyCurrentCommand(game.time);
 
 
         //const initialGameState = game.toArrayBuffer();
@@ -101,7 +101,7 @@ describe('Game class', () => {
         game.progressGameState(100);
 
         playerOne.updateCurrentCommand(game.time,{up: false,down: false, right: false, left: false}, {attack: false, block: false});
-        playerOne.applyCurrentCommand();
+        playerOne.applyCurrentCommand(game.time);
 
         //const finalGameState = game.toArrayBuffer();
         const finalTime = game.time;
@@ -146,7 +146,7 @@ describe('Game class', () => {
         }
 
         playerOne.updateCurrentCommand(game.time,{up: false,down: false, right: true, left: false}, {attack: false, block: false});
-        playerOne.applyCurrentCommand();
+        playerOne.applyCurrentCommand(game.time);
 
 
         //const initialGameState = game.toArrayBuffer();
@@ -160,7 +160,7 @@ describe('Game class', () => {
         game.progressGameState(100);
 
         playerOne.updateCurrentCommand(game.time,{up: false,down: false, right: true, left: false}, {attack: false, block: false});
-        playerOne.applyCurrentCommand();
+        playerOne.applyCurrentCommand(game.time);
 
         //const finalGameState = game.toArrayBuffer();
         const finalTime = game.time;

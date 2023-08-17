@@ -52,7 +52,7 @@ export class Server {
         let startGameProgress = false;
         let previousIntervalTime = Date.now();
 
-        const initialServerDelay = Math.max(this.msPerTick, 100);
+        const initialServerDelay = this.msPerTick * 1.5;
 
         this.intervalId = window.setInterval(() => {
 
@@ -116,7 +116,7 @@ export class Server {
                             let player = this.currentGame.getEntity(playerId)
                             if(player instanceof Player) {
                                 player.updateCurrentCommandFromArrayBuffer(command);
-                                player.applyCurrentCommand();
+                                player.applyCurrentCommand(this.currentGame.time);
                             } else {
                                 console.log(`No player with id ${playerId} found.`);
                             }

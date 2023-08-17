@@ -7,6 +7,7 @@ import { Player } from "../entity/Player";
 import { Map as GameMap } from "../object/Map";
 import { Entity } from "../entity/Entity";
 import { ArrayBufferBuffer } from "./ArrayBufferBuffer";
+import { StatusEffectType } from "../entity/StatusEffect";
 
 // Server is authoritative, Game has to make corrections if client and server disagree
 export class Game {
@@ -103,15 +104,77 @@ export class Game {
     // given current game state 
     // update to (previous time + time) game state
     public progressGameState(time: number) {
+        // reset old status effects ?
+        this.resetStatusEffects();
+
         // hit registration
+        this.hitRegistration();
+
+        // update player sprites / do automatically on status update
+        
         // movement
-        this.entities.forEach((entity) => {
-            entity.move(time);
-        })
+        this.moveEntities(time);
+
         // other...
         // update time
         this.simulationTime = this.simulationTime + time;
     }
+
+    private resetStatusEffects() {
+        this.entities.forEach((entity) => {
+            Object.values(StatusEffectType).forEach((type) => {
+
+                const oldStatus = entity.getStatusEffect(type);
+
+                if(oldStatus.startTime + oldStatus.duration < this.time) {
+                    entity.resetStatusEffect(type);
+                }
+            })
+        })
+    }
+
+    private hitRegistration() {
+        const radiusSquaredThreshold = 400;
+        this.entities.forEach((entity) => {
+            if( entity.getStatusEffect(StatusEffectType.ATTACK).duration > 0
+                &&
+                entity.getStatusEffect(StatusEffectType.ATTACK).startTime <= this.time
+                &&
+                entity.getStatusEffect(StatusEffectType.ATTACK).startTime
+                + entity.getStatusEffect(StatusEffectType.ATTACK).duration >= this.time
+            ) {
+            // apply pushback to targets in range
+
+                this.entities.forEach((hitEntity) => {
+                    if(hitEntity.id !== entity.id) {
+                        if(
+                            (hitEntity.position.x - entity.position.x) * (hitEntity.position.x - entity.position.x)
+                           +
+                           (hitEntity.position.y - entity.position.y) * (hitEntity.position.y - entity.position.y)
+                           <
+                           radiusSquaredThreshold
+                        ) {
+                            // TODO: check direction of the attack too
+                            hitEntity.applyStatusEffect(
+                                StatusEffectType.PUSHBACK,
+                                this.time,
+                                hitEntity.position.x - entity.position.x,
+                                hitEntity.position.y - entity.position.y,
+                                1000
+                            );
+
+                        }
+                    }
+                })
+            }
+        })
+    }
+
+    private moveEntities(time: number) {
+        this.entities.forEach((entity) => {
+            entity.move(time);
+        })
+    } 
 
 
     // client-side only function
@@ -329,7 +392,7 @@ export class Game {
             currentTime = currentCommand.time;
 
             localPlayer.updateCurrentCommandFromArrayBuffer(currentCommand.value);
-            localPlayer.applyCurrentCommand();
+            localPlayer.applyCurrentCommand(this.time);
             localPlayer.move(delta);
             
             currentCommand = currentCommand.next;
