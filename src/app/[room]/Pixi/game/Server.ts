@@ -43,6 +43,13 @@ export class Server {
 
     public start() {
         console.log(`Server start`);
+
+
+        // test: web worker, TODO: move all Server to web worker
+        const testWorker = new Worker(new URL('./WebWorkerServer.ts', import.meta.url));
+        testWorker.postMessage("hello web worker")
+        testWorker.onmessage = (e) => {console.log(e.data)};
+
         // start listening for commands from players
         this.messenger.listenForCommands(this.playerCommands);
 
