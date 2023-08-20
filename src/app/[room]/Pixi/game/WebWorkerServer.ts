@@ -2,7 +2,7 @@
 //  Web Worker file
 //
 
-// specific pixi.js version for webworker
+// specific pixi.js settings for webworker
 // ADAPTER settings has to be set to OffscreenCanvas
 import { settings, IAdapter } from "pixi.js";
 
@@ -32,6 +32,7 @@ import { Game } from "./Game";
 import { Npc } from "../entity/Npc";
 import { Player } from "../entity/Player";
 import { ArrayBufferBuffer } from "./ArrayBufferBuffer";
+import { HighResolutionTimer } from "@/app/util/HighResolutionTimer";
 
 
 
@@ -131,7 +132,21 @@ class WebWorkerServer {
 
         const initialServerDelay = this.msPerTick * 1.5;
 
-        this.intervalId = self.setInterval(() => {
+
+        const testTimer = new HighResolutionTimer(this.msPerTick, () => {
+            let newTime = Date.now();
+            let tickTime = newTime - previousIntervalTime;
+            let stepTime = tickTime / this.stepsInOneTick;
+            previousIntervalTime = newTime;
+            self.postMessage(`Web worker tick time: ${tickTime}`);
+
+            // rest of the code...
+        })
+
+        testTimer.run();
+        
+        /*
+        self.setInterval(() => {
             let newTime = Date.now();
             let tickTime = newTime - previousIntervalTime;
             let stepTime = tickTime / this.stepsInOneTick;
@@ -140,7 +155,10 @@ class WebWorkerServer {
 
             // rest of the code...
         }, this.msPerTick)
+        */
     }
+
+
 
     private forgetCommandsUntil(time: number) {
 
@@ -159,7 +177,7 @@ class WebWorkerServer {
     }
 
     public stop() {
-        clearInterval(this.intervalId);
+        self.clearTimeout(this.intervalId);
     }
 }
 
