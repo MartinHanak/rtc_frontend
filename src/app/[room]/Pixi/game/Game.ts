@@ -5,9 +5,10 @@ import { Container, Point, Sprite } from "pixi.js";
 import { Npc } from "../entity/Npc";
 import { Player } from "../entity/Player";
 import { Map as GameMap } from "../object/Map";
-import { Entity } from "../entity/Entity";
+import { Entity, EntityServerInput } from "../entity/Entity";
 import { ArrayBufferBuffer } from "./ArrayBufferBuffer";
 import { StatusEffectType } from "../entity/StatusEffect";
+import { ServerInitializationData } from "./WebWorkerServer";
 
 // Server is authoritative, Game has to make corrections if client and server disagree
 export class Game {
@@ -398,5 +399,28 @@ export class Game {
             currentCommand = currentCommand.next;
         }
 
+    }
+
+    // return all data about the game (without sprites)
+    // needed to start identical game on the server
+    public getServerInitializationData() : ServerInitializationData {
+
+        let initData = {
+            mapBoundaryPoint: this.map.boundaryPointInput,
+            localPlayerId: this.localPlayerId,
+            entities: [] as EntityServerInput[]
+        }
+
+        this.entities.forEach((entity) => {
+            initData.entities.push({
+                id: entity.id,
+                name: entity.name,
+                x: entity.position.x,
+                y: entity.position.y,
+                type: (entity instanceof Player) ? 'player' : 'npc'
+            })
+        });
+
+        return initData;
     }
 }

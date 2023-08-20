@@ -3,11 +3,19 @@ import { STATUS_EFFECT_LENGTH, STATUS_EFFECT_NUMBER, StatusEffect, StatusEffectT
 import { pointInput } from "../object/Map";
 import { ArrayBufferBuffer, bufferWithTime } from "../game/ArrayBufferBuffer";
 
+export type EntityServerInput = {
+    id: string,
+    name: string,
+    x: number,
+    y: number,
+    type: 'player' | 'npc'
+}
+
 export abstract class Entity {
 
     // visual representation;
     public id: string;
-    private name: string;
+    public name: string;
     private sprite: Sprite;
     private currentSpriteContainer: Container;
 

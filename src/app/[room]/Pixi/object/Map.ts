@@ -9,6 +9,14 @@ export class Map {
     private backgroundImage: Sprite;
     private graphics: Graphics;
 
+    get boundaryPointInput() {
+        let result : pointInput[] = [];
+        for(const point of this.boundaryPoints) {
+            result.push([point.x,point.y]);
+        }
+        return result
+    }
+
     constructor(boundaryPoint: pointInput[], background: Sprite, staticAssets?: StaticAsset[]) {
         this.backgroundImage = background;
         this.staticAssets = staticAssets?  staticAssets : [] ;
