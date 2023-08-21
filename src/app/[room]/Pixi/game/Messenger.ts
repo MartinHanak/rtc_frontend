@@ -98,13 +98,17 @@ export class Messenger {
         }
 
         // host player
+        // must create copy of the command Arraybuffer
+        // ownership of ArrayBuffer is transferred to the web worker for the host
+
         window.addEventListener("hostCommand", (event: CustomEvent<ArrayBuffer>) => {
+            const bufferCopy = event.detail.slice(0);
 
             webWorkerServer.postMessage(
                 {
                     playerId: this.hostId,
-                    buffer: event.detail
-                }, [event.detail]
+                    buffer: bufferCopy
+                }, [bufferCopy]
             );
 
         } );

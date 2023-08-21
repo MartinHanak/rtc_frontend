@@ -123,6 +123,19 @@ class WebWorkerServer {
     }
 
     public start() {
+        // start listening for player commands (coming from the Messenger)
+        self.addEventListener('message', (event) => {
+            const playerId = event.data.playerId;
+            if(playerId) {
+                let bufferView = new Float64Array(event.data.buffer);
+                let time = bufferView[0];
+                this.playerCommands[playerId].insert(time, event.data.buffer);
+            }
+            // test
+            self.postMessage(`Received command from player ${playerId}`);
+        })
+
+        // initialization before server loop
         let firstGameStateSent = false;
         let startGameProgress = false;
         let previousIntervalTime = Date.now();
@@ -151,7 +164,12 @@ class WebWorkerServer {
                     // send the first game state = initial game state, time 0
                     // old: this.messenger.sendGameState(this.currentGame.toArrayBuffer())
                     const initialState = this.game.toArrayBuffer();
-                    self.postMessage(initialState, [initialState]);
+                    self.postMessage(
+                        {
+                            type: 'gameState', 
+                            buffer: initialState
+                        }, [initialState]
+                    );
                 }
             } else if (firstGameStateSent && !startGameProgress) {
                 // wait for commands from all players for the first server tick
@@ -213,13 +231,23 @@ class WebWorkerServer {
                 this.forgetCommandsUntil(this.game.time);
                 // send new game state to all participants
                 const gameState = this.game.toArrayBuffer();
-                self.postMessage(gameState, [gameState]);
+                self.postMessage(
+                    {
+                        type: 'gameState', 
+                        buffer: gameState
+                    }, [gameState]
+                );
 
             } else if( !startGameProgress && firstGameStateSent ) {
                 // send game state without progressing the game
                 // UDP connection: 1st game state might not have arrived
                 const initialGameState = this.game.toArrayBuffer();
-                self.postMessage(initialGameState, [initialGameState]);
+                self.postMessage(
+                    {
+                        type: 'gameState', 
+                        buffer: initialGameState
+                    }, [initialGameState]
+                );
             }
 
         })

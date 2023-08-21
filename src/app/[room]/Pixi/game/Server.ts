@@ -26,14 +26,13 @@ export class Server {
 
         // start listening for commands from players
         // send them to the web worker
-
         this.messenger.listenForCommands(this.webWorkerServer)
 
         // react to web worker message
         // use messenger to send game state to other players
         this.webWorkerServer.addEventListener('message', (event) => {
 
-            if(event.data.type === 'gamestate') {
+            if(event.data.type === 'gameState') {
                 this.messenger.sendGameState(event.data.buffer)
             }
 

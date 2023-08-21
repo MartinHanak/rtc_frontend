@@ -115,14 +115,16 @@ export class PlayingState extends State {
             this.context.appWrapper.localInput.updatePlayerCommandFromLocalInput(localPlayer, game.time);
 
             const commandForCurrentFrame = localPlayer.command;
-            // send current command to the server
 
+            // save command to local command buffer
+            game.localCommandsBuffer.insert(game.time, commandForCurrentFrame);
+
+            // send current command to the server
             this.context.appWrapper.messenger.sendCommand(
                 commandForCurrentFrame
             )
 
-            // save command to local command buffer
-            game.localCommandsBuffer.insert(game.time, commandForCurrentFrame);
+            
             // save game state to local buffer
             game.localStateBuffer.insert(game.time, game.getEntity(localPlayerId).toBufferView().buffer);
 
