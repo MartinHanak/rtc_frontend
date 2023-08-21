@@ -36,7 +36,6 @@ import { HighResolutionTimer } from "@/app/util/HighResolutionTimer";
 
 
 
-
 let server: WebWorkerServer | null = null;
 
 export interface ServerInitializationData  {
@@ -50,33 +49,32 @@ self.addEventListener('message', serverInitialization);
 
 function serverInitialization(e: MessageEvent<ServerInitializationData>) {
 
-    server = new WebWorkerServer(e.data);
-
-    // if success: remove event listener
-    if(server) {
-        self.postMessage('Web worker server created successfully.')
-        self.removeEventListener('message', serverInitialization)
-    } else {
+    try {
+        server = new WebWorkerServer(e.data);
+        self.postMessage('Web worker server created successfully.');
+        self.removeEventListener('message', serverInitialization);
+    } catch (err) {
         throw new Error(`Error while creating a web worker server`);
     }
 }
 
 class WebWorkerServer {
-    private tickRate: number = 10; // tickRate per second update
+    private tickRate: number = 10; // tickRate = ticks per second 
 
     get msPerTick() {
         return Math.floor(1000/this.tickRate);
     }
     // server does several game updates in one tick = to simulate approx. 60 FPS
+    // for tickRate 10 there will be 6 steps in one tick
     get stepsInOneTick() {
         return Math.max(1, Math.round(60 / this.tickRate));
     }
 
-    private intervalId : number;
+    private timer: HighResolutionTimer;
     private playerIds: string[];
     private playerCommands: Record<string, ArrayBufferBuffer>;
 
-    private currentTickCommands: Record< string, (ArrayBuffer|null)[] >
+    private currentTickCommands: Record< string, (ArrayBuffer|null)[] >;
 
     private game: Game;
     
@@ -85,7 +83,6 @@ class WebWorkerServer {
         const gameMap = new GameMap(data.mapBoundaryPoint, new Sprite());
         const players : Player[] = [];
         const npcs : Npc[] = [];
-
         this.playerIds = [];
 
         for(const entityInput of data.entities) {
@@ -133,29 +130,103 @@ class WebWorkerServer {
         const initialServerDelay = this.msPerTick * 1.5;
 
 
-        const testTimer = new HighResolutionTimer(this.msPerTick, () => {
+        this.timer = new HighResolutionTimer(this.msPerTick, () => {
             let newTime = Date.now();
             let tickTime = newTime - previousIntervalTime;
             let stepTime = tickTime / this.stepsInOneTick;
             previousIntervalTime = newTime;
             self.postMessage(`Web worker tick time: ${tickTime}`);
 
-            // rest of the code...
+            // send first game state after receiving enough (empty) commands from all players
+            if(!firstGameStateSent) {
+
+                firstGameStateSent = true;
+                for(const playerId in this.playerCommands) {
+                    if(this.playerCommands[playerId].bufferLength < 10) {
+                        firstGameStateSent = false;
+                        break;
+                    }
+                }
+                if(firstGameStateSent) {
+                    // send the first game state = initial game state, time 0
+                    // old: this.messenger.sendGameState(this.currentGame.toArrayBuffer())
+                    const initialState = this.game.toArrayBuffer();
+                    self.postMessage(initialState, [initialState]);
+                }
+            } else if (firstGameStateSent && !startGameProgress) {
+                // wait for commands from all players for the first server tick
+                // only then start the game progress from 0
+                startGameProgress = true;
+                for(const playerId in this.playerCommands) {
+                    if(!this.playerCommands[playerId].lastInsertedTime) {
+                        startGameProgress = false;
+                        break;
+                    } else if (this.playerCommands[playerId].lastInsertedTime! < initialServerDelay) {
+                        startGameProgress = false;
+                        break;
+                    }
+                }
+            }
+
+
+            // start sending game state
+            if(startGameProgress && firstGameStateSent) {
+
+                // read command buffers
+                // split commands into steps for all players
+                this.updateCurrentTickCommands(
+                    this.game.time,
+                    this.game.time + tickTime,
+                    this.stepsInOneTick
+                )
+                // test
+                /*
+                console.log(`Server time: ${this.game.time}`);
+                for(const playerId in this.currentTickCommands) {
+                    console.log(this.currentTickCommands[playerId])
+                }
+                */
+
+                for(let step = 0; step < this.stepsInOneTick; step++) {
+                    // apply commands to current game (and current time window)
+                    for(const playerId in this.currentTickCommands) {
+                        // if no command = no update (uses previous player command instead)
+                        let command = this.currentTickCommands[playerId][step];
+                        if(command) {
+                            console.log(`Command found for current step.`)
+                            let player = this.game.getEntity(playerId)
+                            if(player instanceof Player) {
+                                player.updateCurrentCommandFromArrayBuffer(command);
+                                player.applyCurrentCommand(this.game.time);
+                            } else {
+                                console.log(`No player with id ${playerId} found.`);
+                            }
+                        } else {
+                            console.log(`No command found for current step.`);
+                        }
+                    }
+                    // progress game given the commands
+                    this.game.progressGameState(stepTime);
+                    // LATER: save a new game state (with updated simulation time) 
+                }
+                // remove them from buffer
+                this.forgetCommandsUntil(this.game.time);
+                // send new game state to all participants
+                const gameState = this.game.toArrayBuffer();
+                self.postMessage(gameState, [gameState]);
+
+            } else if( !startGameProgress && firstGameStateSent ) {
+                // send game state without progressing the game
+                // UDP connection: 1st game state might not have arrived
+                const initialGameState = this.game.toArrayBuffer();
+                self.postMessage(initialGameState,[initialGameState]);
+            }
+
         })
 
-        testTimer.run();
+        // start the server loop
+        this.timer.run();
         
-        /*
-        self.setInterval(() => {
-            let newTime = Date.now();
-            let tickTime = newTime - previousIntervalTime;
-            let stepTime = tickTime / this.stepsInOneTick;
-            previousIntervalTime = newTime;
-            self.postMessage(`Web worker tick time: ${tickTime}`);
-
-            // rest of the code...
-        }, this.msPerTick)
-        */
     }
 
 
@@ -177,7 +248,7 @@ class WebWorkerServer {
     }
 
     public stop() {
-        self.clearTimeout(this.intervalId);
+        this.timer.stop();
     }
 }
 
