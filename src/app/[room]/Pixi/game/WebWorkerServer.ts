@@ -219,7 +219,7 @@ class WebWorkerServer {
                 // send game state without progressing the game
                 // UDP connection: 1st game state might not have arrived
                 const initialGameState = this.game.toArrayBuffer();
-                self.postMessage(initialGameState,[initialGameState]);
+                self.postMessage(initialGameState, [initialGameState]);
             }
 
         })
@@ -228,8 +228,6 @@ class WebWorkerServer {
         this.timer.run();
         
     }
-
-
 
     private forgetCommandsUntil(time: number) {
 

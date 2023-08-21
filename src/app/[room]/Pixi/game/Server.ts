@@ -1,7 +1,4 @@
-import { Player } from "../entity/Player";
-import { Game } from "./Game";
 import { Messenger } from "./Messenger";
-import { ArrayBufferBuffer } from "./ArrayBufferBuffer";
 import { ServerInitializationData } from "./WebWorkerServer";
 
 // updates old game state given user inputs
@@ -9,7 +6,6 @@ export class Server {
 
     private messenger: Messenger;
     private webWorkerServer: Worker;
-
 
     constructor(initData: ServerInitializationData, messenger: Messenger) {
 
@@ -30,10 +26,19 @@ export class Server {
 
         // start listening for commands from players
         // send them to the web worker
-        // old way:     this.messenger.listenForCommands(this.playerCommands);
+
+        this.messenger.listenForCommands(this.webWorkerServer)
 
         // react to web worker message
-        // use messenger to send to other players
+        // use messenger to send game state to other players
+        this.webWorkerServer.addEventListener('message', (event) => {
+
+            if(event.data.type === 'gamestate') {
+                this.messenger.sendGameState(event.data.buffer)
+            }
+
+        });
+        
     }
 
     public stop() {

@@ -64,7 +64,7 @@ export class PlayingState extends State {
         if(this.context.appWrapper.localId === this.context.appWrapper.hostId) {
             // server initializes its own instance of the same game
             this.server = new Server(
-                this.context.appWrapper.initializeGame(),
+                game.getServerInitializationData(),
                 this.context.appWrapper.messenger
             );
 

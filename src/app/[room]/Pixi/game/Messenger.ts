@@ -81,30 +81,34 @@ export class Messenger {
     }
 
     // for now: only host listens for commands from all 
-    public listenForCommands(playerBuffers: Record<string, ArrayBufferBuffer>) {
-        // playerBuffers include hostId too
-        for(const playerId in playerBuffers) {
+    public listenForCommands(webWorkerServer : Worker) {
 
-            // listens for dataChannel message event for non-host users
-            // listens for custom event hostCommand for host-user
-            if (playerId !== this.hostId) {
+        // non-local players
+        for(const playerId in this.dataChannels) {
+            this.dataChannels[playerId].addEventListener('message', (event : MessageEvent<ArrayBuffer>) => {
 
-                if(!(playerId in this.dataChannels)) {
-                    throw new Error(`Messenger dit not find data channel corresponding to the player ${playerId}.`);
-                }
+                webWorkerServer.postMessage(
+                    {
+                        playerId: playerId,
+                        buffer: event.data
+                    }, [event.data]
+                );
 
-                this.dataChannelCommandHandlers[playerId] = (event) => this.handleDataChannelCommand(event,playerBuffers[playerId]);
-
-                this.dataChannels[playerId].addEventListener('message', this.dataChannelCommandHandlers[playerId])
-            } else  {
-                // host event
-                this.hostCommandHandler = (event) => this.handleHostCommand(event, playerBuffers[playerId]);
-
-                window.addEventListener("hostCommand", this.hostCommandHandler);
-            }
-
-            
+            })
         }
+
+        // host player
+        window.addEventListener("hostCommand", (event: CustomEvent<ArrayBuffer>) => {
+
+            webWorkerServer.postMessage(
+                {
+                    playerId: this.hostId,
+                    buffer: event.detail
+                }, [event.detail]
+            );
+
+        } );
+  
     }
 
     private insertCommand(command: ArrayBuffer | null, buffer: ArrayBufferBuffer) {
@@ -177,14 +181,5 @@ export class Messenger {
         // run server reconciliation 
         localGame.serverReconciliation(time, event.data);
     }
-
-    private handleHostCommand(event: CustomEvent<ArrayBuffer>, buffer: ArrayBufferBuffer) {
-        this.insertCommand(event.detail, buffer);
-    }
-
-    private handleDataChannelCommand(event: MessageEvent<ArrayBuffer>, buffer: ArrayBufferBuffer) {
-        this.insertCommand(event.data, buffer);
-    }
-
 
 }
