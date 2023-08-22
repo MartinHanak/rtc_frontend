@@ -30,6 +30,49 @@ export class Game {
     public localStateBuffer : ArrayBufferBuffer;
     public localCommandsBuffer : ArrayBufferBuffer;
 
+    // 3 main parts of the game  = client-side prediction, enemy interpolation, server reconciliation 
+
+    // things to check:
+    // client-side prediction
+    // - local player should move smoothly (occasional jumps = server reconciliation)
+    // - local player is in the future compared to the server state
+    get clientPredictionTimes() {
+        let serverTime =  this.serverStateBuffer.lastInsertedTime?  this.serverStateBuffer.lastInsertedTime : 0;
+        let latestCommands = this.localCommandsBuffer.getTwoLatestValues();
+        let frameTime = latestCommands? latestCommands[1].time - latestCommands[0].time : 0;
+        return {
+            relativeToServer: this.time - serverTime,
+            frameTime: frameTime
+        }
+    }
+
+    // enemy interpolation
+    // - enemies are displayed with slight delay (state from the past)
+    // - delay should be such that their state is interpolated between 2 last game states
+    // - occasionally enemy can be extrapolated slighly into the future (relative to the last game state received)
+    get interpolationTimes() {
+        let times = {
+            serverSecondLatest: 0,
+            serverLatest: 0,
+            serverDelay: this._serverDelay,
+            interpolationCombinedDelay: this._serverDelay + this.serverStateDelta
+        }
+
+        let lastTwoStates = this.serverStateBuffer.getTwoLatestValues()
+        if(lastTwoStates) {
+            times.serverSecondLatest = lastTwoStates[0].time,
+            times.serverLatest = lastTwoStates[1].time
+        }
+
+        return times;
+    }
+
+    // server reconciliation
+    // - due to variable frame times, server reconciliation can be observed even if other players do not interact with local player
+    // - local state (from the past) is compared with game state received from the server
+    // - if too big of difference = local player corrected
+    public lastServerReconciliationTriggered: number = 0;
+
     constructor(map: GameMap, localPlayerId: string, players: Player[], npcs: Npc[]) {
         this.map = map;
 
@@ -105,7 +148,7 @@ export class Game {
     // given current game state 
     // update to (previous time + time) game state
     public progressGameState(time: number) {
-        // reset old status effects ?
+        // reset old status effects 
         this.resetStatusEffects();
 
         // hit registration
@@ -363,6 +406,7 @@ export class Game {
         // update player position from current position (server position from the past)
         // to present (using local commands from the buffer)
         if(update) {
+            this.lastServerReconciliationTriggered = this.time;
             this.updateLocalPlayer(serverTime, this.time);
         }
 

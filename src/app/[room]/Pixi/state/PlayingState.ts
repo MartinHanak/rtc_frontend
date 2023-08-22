@@ -6,6 +6,8 @@ import { appendFile } from "fs";
 import { Player } from "../entity/Player";
 import { Server } from "../game/Server";
 import { Command } from "../game/Command";
+import { BitmapText } from 'pixi.js';
+import { Assets } from "pixi.js";
 
 export class PlayingState extends State {
 
@@ -34,6 +36,12 @@ export class PlayingState extends State {
 
         this.context.app.stage.addChild(heading);
         this.context.app.stage.addChild(next);
+
+        // game overlay ( for testing )
+        const gameStats = new Text('Game info');
+        gameStats.x = 20;
+        gameStats.y = 100;
+        this.context.app.stage.addChild(gameStats);
 
         // game test
 
@@ -72,6 +80,11 @@ export class PlayingState extends State {
 
            this.server.start();
         }
+
+        
+        
+
+
 
         // client-side: start listening for game states from the server
         this.context.appWrapper.messenger.listenForGameState(game.serverStateBuffer, game);
@@ -140,6 +153,14 @@ export class PlayingState extends State {
 
             // discard old game states and local command buffer values
             game.serverStateBuffer.removeValuesUpto(game.time - 2000);
+
+            gameStats.text = 
+            `
+            Local advance: ${game.clientPredictionTimes.relativeToServer} ms\n
+            Local frame: ${game.clientPredictionTimes.frameTime} ms\n\n 
+            Interpolation: ${game.interpolationTimes.interpolationCombinedDelay} ms\n 
+            Last reconciliation: ${game.lastServerReconciliationTriggered}          
+            `
         })
 
     }

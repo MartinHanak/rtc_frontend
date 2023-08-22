@@ -75,6 +75,7 @@ class WebWorkerServer {
     private playerCommands: Record<string, ArrayBufferBuffer>;
 
     private currentTickCommands: Record< string, (ArrayBuffer|null)[] >;
+    private currentTickTime: number = 0;
 
     private game: Game;
     
@@ -120,6 +121,38 @@ class WebWorkerServer {
         }
 
         this.start();
+
+        // listen for server stats request
+        self.addEventListener('message' , (event) => {
+            if(event.data === 'serverStats') {
+                self.postMessage(this.serverStats);
+            }
+        })
+    }
+
+    get serverStats() {
+        let result = {
+            time: this.game.time,
+            tickTime: this.currentTickTime,
+            playerCommandsMissing : {}  as Record<string, number>,
+            playerRelativeTimes : {} as Record<string, number>,
+        }
+
+        for(const playerId in this.currentTickCommands) {
+            result.playerCommandsMissing[playerId] = this.currentTickCommands[playerId].reduce((missingSum, current) => { 
+                if(!current) {
+                    return missingSum + 1
+                } else {
+                    return missingSum;
+                }
+            },0);
+        }
+
+        for(const playerId in this.playerCommands) {
+            result.playerRelativeTimes[playerId] = (this.playerCommands[playerId].lastInsertedTime || 0 ) - this.game.time;
+        }
+
+        return result;
     }
 
     public start() {
@@ -148,7 +181,9 @@ class WebWorkerServer {
             let tickTime = newTime - previousIntervalTime;
             let stepTime = tickTime / this.stepsInOneTick;
             previousIntervalTime = newTime;
+
             self.postMessage(`Web worker tick time: ${tickTime}`);
+            this.currentTickTime = tickTime;
 
             // send first game state after receiving enough (empty) commands from all players
             if(!firstGameStateSent) {
