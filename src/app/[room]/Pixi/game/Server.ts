@@ -14,7 +14,7 @@ export class Server {
         this.webWorkerServer = new Worker(new URL('./WebWorkerServer.ts', import.meta.url));
         this.webWorkerServer.postMessage(initData);
 
-        this.webWorkerServer.addEventListener('message', (e) => console.log(e.data));
+        //this.webWorkerServer.addEventListener('message', (e) => console.log(e.data));
         this.webWorkerServer.addEventListener('error', (err) => {console.log(err.message)});
         this.webWorkerServer.addEventListener('messageerror', (err) => {console.log(err)});
 
@@ -34,6 +34,10 @@ export class Server {
 
             if(event.data.type === 'gameState') {
                 this.messenger.sendGameState(event.data.buffer)
+            }
+
+            if(event.data.type === 'gameStats') {
+                console.log(event.data.stats);
             }
 
         });

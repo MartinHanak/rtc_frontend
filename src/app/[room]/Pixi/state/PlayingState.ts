@@ -31,17 +31,12 @@ export class PlayingState extends State {
         next.cursor = 'pointer';
         next.on('pointerdown', () => {
             this.context.transitionTo(new GameOverState())
-            console.log('hello');
         });
 
         this.context.app.stage.addChild(heading);
         this.context.app.stage.addChild(next);
 
-        // game overlay ( for testing )
-        const gameStats = new Text('Game info');
-        gameStats.x = 20;
-        gameStats.y = 100;
-        this.context.app.stage.addChild(gameStats);
+
 
         // game test
 
@@ -80,10 +75,6 @@ export class PlayingState extends State {
 
            this.server.start();
         }
-
-        
-        
-
 
 
         // client-side: start listening for game states from the server
@@ -154,13 +145,10 @@ export class PlayingState extends State {
             // discard old game states and local command buffer values
             game.serverStateBuffer.removeValuesUpto(game.time - 2000);
 
-            gameStats.text = 
-            `
-            Local advance: ${game.clientPredictionTimes.relativeToServer} ms\n
-            Local frame: ${game.clientPredictionTimes.frameTime} ms\n\n 
-            Interpolation: ${game.interpolationTimes.interpolationCombinedDelay} ms\n 
-            Last reconciliation: ${game.lastServerReconciliationTriggered}          
-            `
+            
+            
+            console.log(game.gameStats)
+            
         })
 
     }

@@ -88,7 +88,6 @@ export class Game {
 
             if(player.id === this.localPlayerId) {
                 this.localPlayerOrder = index;
-                console.log(`Local player: ${player.id}`);
             }
         })
         npcs.forEach((npc) => {
@@ -293,7 +292,6 @@ export class Game {
 
     // assume that current Game values = values for the render frame
     public getCurrentFrame() : Container {
-        console.log('Current frame');
 
         const container = this.map.getCurrentFrame();
         container.x = 0;
@@ -308,7 +306,6 @@ export class Game {
             container.addChild(entity.getCurrentSprite(0))
         })
 
-        console.log(container)
         return container;
     }
 
@@ -466,5 +463,14 @@ export class Game {
         });
 
         return initData;
+    }
+
+    get gameStats() {
+        return {
+            time: this.time,
+            clientPrediction: this.clientPredictionTimes,
+            enemyInterpolation: this.interpolationTimes,
+            serverReconciliation: this.lastServerReconciliationTriggered
+        }
     }
 }

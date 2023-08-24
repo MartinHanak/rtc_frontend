@@ -96,9 +96,11 @@ export function WebRTCContextProvider({ children }: WebRTCContextProvider) {
             console.log(`Data channel closed`)
         })
 
+        /*
         dataChannel.addEventListener('message', () => {
             console.log(`Data channel message received`)
         })
+        */
 
         connection.onicecandidate = (event) => {
 

@@ -122,7 +122,6 @@ export class Messenger {
 
         // read command time
         let time = Math.floor(this.readArrayBufferTime(command));
-        //console.log(`Received command for time ${time}`);
 
         buffer.insert(time, command);
     }

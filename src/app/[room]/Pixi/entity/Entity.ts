@@ -218,7 +218,6 @@ export abstract class Entity {
         const latestValues = this.extractValuesFromArrayBuffer(latest.value);
 
         if(time > latest.time) {
-            console.log(`FUTURE`);
             // if time > last buffer (including delay): 
             // extrapolate = same status, constant velocity
             const delta = time - latest.time ;
@@ -235,7 +234,6 @@ export abstract class Entity {
 
 
         } else if (time <= latest.time && time >= secondLatest.time) {
-            console.log('BETWEEN')
             // if time < last buffer:
             // interpolate = linear position / velocity between two times
             // status effects: look at both frames, choose one where non-zero duration (if any)
@@ -265,7 +263,6 @@ export abstract class Entity {
 
 
         } else {
-            console.log('PAST')
             // if time < secondLast buffer (should not happen too often)
             // use state = secondLast buffer
             // and assume constant velocity up to secondLast buffer 

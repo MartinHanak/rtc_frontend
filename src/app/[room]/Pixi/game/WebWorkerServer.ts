@@ -122,12 +122,6 @@ class WebWorkerServer {
 
         this.start();
 
-        // listen for server stats request
-        self.addEventListener('message' , (event) => {
-            if(event.data === 'serverStats') {
-                self.postMessage(this.serverStats);
-            }
-        })
     }
 
     get serverStats() {
@@ -164,8 +158,6 @@ class WebWorkerServer {
                 let time = bufferView[0];
                 this.playerCommands[playerId].insert(time, event.data.buffer);
             }
-            // test
-            self.postMessage(`Received command from player ${playerId}`);
         })
 
         // initialization before server loop
@@ -182,7 +174,6 @@ class WebWorkerServer {
             let stepTime = tickTime / this.stepsInOneTick;
             previousIntervalTime = newTime;
 
-            self.postMessage(`Web worker tick time: ${tickTime}`);
             this.currentTickTime = tickTime;
 
             // send first game state after receiving enough (empty) commands from all players
@@ -232,13 +223,6 @@ class WebWorkerServer {
                     this.game.time + tickTime,
                     this.stepsInOneTick
                 )
-                // test
-                /*
-                console.log(`Server time: ${this.game.time}`);
-                for(const playerId in this.currentTickCommands) {
-                    console.log(this.currentTickCommands[playerId])
-                }
-                */
 
                 for(let step = 0; step < this.stepsInOneTick; step++) {
                     // apply commands to current game (and current time window)
@@ -246,16 +230,16 @@ class WebWorkerServer {
                         // if no command = no update (uses previous player command instead)
                         let command = this.currentTickCommands[playerId][step];
                         if(command) {
-                            console.log(`Command found for current step.`)
+                            //console.log(`Command found for current step.`)
                             let player = this.game.getEntity(playerId)
                             if(player instanceof Player) {
                                 player.updateCurrentCommandFromArrayBuffer(command);
                                 player.applyCurrentCommand(this.game.time);
                             } else {
-                                console.log(`No player with id ${playerId} found.`);
+                                throw new Error(`No player with id ${playerId} found.`);
                             }
                         } else {
-                            console.log(`No command found for current step.`);
+                            //console.log(`No command found for current step.`);
                         }
                     }
                     // progress game given the commands
@@ -272,6 +256,12 @@ class WebWorkerServer {
                         buffer: gameState
                     }, [gameState]
                 );
+
+                // send server statistics
+                self.postMessage({
+                    type: 'gameStats',
+                    stats: this.serverStats
+                })
 
             } else if( !startGameProgress && firstGameStateSent ) {
                 // send game state without progressing the game
