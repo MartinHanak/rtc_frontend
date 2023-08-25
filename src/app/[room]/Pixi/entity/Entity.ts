@@ -91,7 +91,7 @@ export abstract class Entity {
         const vectorLength = Math.sqrt(x*x + y*y);
 
         this._statusEffects[type].startTime = startTime;
-        this._statusEffects[type].duration = duration? duration : 1000;
+        this._statusEffects[type].duration = duration? duration : 200;
         this._statusEffects[type].direction = [x/vectorLength, y/vectorLength];
 
     }
@@ -342,7 +342,7 @@ export abstract class Entity {
         // condition to trigger server reconciliation =
         // 1. too much difference in positions
         // 2. difference in status effects
-        const positionDifferenceThreshold = 1; // in px
+        const positionDifferenceThreshold = 5; // in px
         if(
             Math.abs(interpolatedValues.position[0] - serverValues.position[0]) > positionDifferenceThreshold
             ||
@@ -359,6 +359,12 @@ export abstract class Entity {
                 }
             }, false)
            ) {
+            // for testing:
+            console.log(`Server values:`)
+            console.log(serverValues)
+            console.log(`Local interpolated values`)
+            console.log(interpolatedValues);
+
             // set to server position (from the past)
             this.updateFromArrayBuffer(server.value);
             // next: update position to current time using commands from the buffer

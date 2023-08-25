@@ -176,7 +176,7 @@ export class Messenger {
     private handleDataChannelGameState(event: MessageEvent<ArrayBuffer>, buffer: ArrayBufferBuffer, localGame: Game) {
         let time = this.readArrayBufferTime(event.data);
         if(time > localGame.time) {
-            throw new Error('Server state in front of local game state')
+            console.log('Server state in front of local game state')
         }
 
         buffer.insert(time,event.data);

@@ -88,6 +88,7 @@ export class Game {
 
             if(player.id === this.localPlayerId) {
                 this.localPlayerOrder = index;
+                console.log(`Local player order: ${this.localPlayerOrder}`);
             }
         })
         npcs.forEach((npc) => {
@@ -203,7 +204,7 @@ export class Game {
                                 this.time,
                                 hitEntity.position.x - entity.position.x,
                                 hitEntity.position.y - entity.position.y,
-                                1000
+                                100
                             );
 
                         }
@@ -381,7 +382,7 @@ export class Game {
         // if none found, do nothing
         if(!buffers || !buffers[0].value || !buffers[1].value) {
             if(serverTime > 1000) {
-                throw new Error('No buffers found for server reconciliation')
+                console.log('No buffers found for server reconciliation');
             }
             return;
         }

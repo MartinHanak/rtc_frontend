@@ -59,7 +59,7 @@ function serverInitialization(e: MessageEvent<ServerInitializationData>) {
 }
 
 class WebWorkerServer {
-    private tickRate: number = 10; // tickRate = ticks per second 
+    private tickRate: number = 60; // tickRate = ticks per second 
 
     get msPerTick() {
         return Math.floor(1000/this.tickRate);
